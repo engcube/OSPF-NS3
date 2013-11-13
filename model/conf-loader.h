@@ -63,6 +63,16 @@ public:
   int calcDestNodeBySource(int id, int interface);
   int calcDestInterfaceBySource(int id, int interface);
 
+  vector<Subnet>& getSubnets(){
+      return m_Subnets;
+  }
+
+  void addSubnet(Subnet& subnet){
+      m_Subnets.push_back(subnet);
+  }
+
+  void update(int id, map<Subnet, int>& table);
+
 private:
 
   string UPDATE_MSG;
@@ -82,6 +92,7 @@ private:
   };
 
   map<pair<int,int>, Subnet> m_LinkSubnet;
+  std::vector<Subnet> m_Subnets;
 
   int m_CoreNum;
   int m_ToRNum;

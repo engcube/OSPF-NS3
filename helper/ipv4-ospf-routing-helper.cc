@@ -56,9 +56,10 @@ Ipv4OSPFRoutingHelper::Create (Ptr<Node> node) const
   //router->setID(id);
   //router->SetRoutingProtocol (routing);
   map<Subnet, int> mOSPFRoutingTable;
-  Subnet subnet(0x0a000000, 24);
+  //Subnet subnet(0x0a000000, 24);
   //mOSPFRoutingTable.insert(pair<Subnet, int>(subnet, id));
   //mOSPFRoutingTable[subnet] = id;
+  ConfLoader::Instance()->update(id, mOSPFRoutingTable);
   routing->SetOSPFRoutingTable(mOSPFRoutingTable);
   //routing->GetOSPFRoutingTable()[subnet] = id;
   //ConfLoader::Instance()->UpdateOSPFGrid(node->GetId(), mOSPFRoutingTable);
@@ -66,6 +67,8 @@ Ipv4OSPFRoutingHelper::Create (Ptr<Node> node) const
   node->AggregateObject(routing);
   return routing;
 }
+
+
 
 void 
 Ipv4OSPFRoutingHelper::PopulateRoutingTables (void)

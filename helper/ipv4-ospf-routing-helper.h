@@ -28,6 +28,7 @@
 
 #include "ns3/ipv4-ospf-routing.h"
 #include "ns3/ipv4-list-routing.h"
+#include "ns3/conf-loader.h"
 
 using namespace std;
 

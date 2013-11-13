@@ -43,6 +43,8 @@ int main (int argc, char *argv[])
 
   //LogComponentEnable ("QuaggaHelper", LOG_LEVEL_INFO);
   LogComponentEnable ("OSPFRoutingHelper", LOG_LEVEL_INFO);
+  //LogComponentEnable ("Ipv4OSPFRouting", LOG_LEVEL_INFO);
+
 
 
   int CORE_NUM = 2;
@@ -138,6 +140,32 @@ int main (int argc, char *argv[])
   // Address Configuration
   //
   //
+      int i = 0;
+      for(list<NetDeviceContainer>::iterator it= netDeviceContainers.begin(); it!=netDeviceContainers.end(); ++it){
+          stringstream ss;
+          ss << "192." << i/255 << "." << i%255 << ".0";
+          string b = ss.str();
+          Subnet subnet(b,SUBNET_MASK);
+          int index1 = i/(TOR_NUM+BORDER_NUM);
+          int index2 = i%(TOR_NUM+BORDER_NUM)+CORE_NUM;
+          ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
+          ConfLoader::Instance()->addSubnet(subnet);
+          i++;
+      }
+      cout << "-------" << endl;
+      i = 0;
+      for(list<NetDeviceContainer>::iterator it= netDeviceContainers_2.begin(); it!=netDeviceContainers_2.end(); ++it){
+          stringstream ss;
+          ss << "10." << i/255 << "." << i%255 << ".0";
+          string b = ss.str();
+          Subnet subnet(b,SUBNET_MASK);
+          int index1 = i+CORE_NUM;
+          int index2 = i+CORE_NUM+TOR_NUM+BORDER_NUM;
+          ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
+          ConfLoader::Instance()->addSubnet(subnet);
+          i++;
+      }
+
 
       // Internet stack install
       InternetStackHelper internet;
@@ -151,7 +179,7 @@ int main (int argc, char *argv[])
       internet.SetRoutingHelper (listRouting);
       internet.Install (c);
 
-      int i = 0;
+      i = 0;
       list<Ipv4InterfaceContainer> ipv4InterfaceContainers;
       for(list<NetDeviceContainer>::iterator it= netDeviceContainers.begin(); it!=netDeviceContainers.end(); ++it){
           stringstream ss;
@@ -160,15 +188,15 @@ int main (int argc, char *argv[])
           //cout << b << endl;
           Ipv4AddressHelper ipv4AddrHelper;
           ipv4AddrHelper.SetBase (b.c_str(), "255.255.255.0");
-          Subnet subnet(b,SUBNET_MASK);
+          /*Subnet subnet(b,SUBNET_MASK);
           int index1 = i/(TOR_NUM+BORDER_NUM);
           int index2 = i%(TOR_NUM+BORDER_NUM)+CORE_NUM;
           ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
+          ConfLoader::Instance()->addSubnet(subnet);*/
           Ipv4InterfaceContainer ii = ipv4AddrHelper.Assign (*it);
           ipv4InterfaceContainers.push_back(ii);
           i++;
       }
-
       i = 0;
       list<Ipv4InterfaceContainer> ipv4InterfaceContainers_2;
       for(list<NetDeviceContainer>::iterator it= netDeviceContainers_2.begin(); it!=netDeviceContainers_2.end(); ++it){
@@ -178,17 +206,18 @@ int main (int argc, char *argv[])
           //cout << b << endl;
           Ipv4AddressHelper ipv4;
           ipv4.SetBase (b.c_str(), "255.255.255.0");
-          Subnet subnet(b,SUBNET_MASK);
+          /*Subnet subnet(b,SUBNET_MASK);
           int index1 = i+CORE_NUM;
           int index2 = i+CORE_NUM+TOR_NUM+BORDER_NUM;
           ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
-
+          ConfLoader::Instance()->addSubnet(subnet);*/
           Ipv4InterfaceContainer ii = ipv4.Assign (*it);
           ipv4InterfaceContainers.push_back(ii);
           i++;
       }
 
     map<pair<int,int>, Subnet> mm = ConfLoader::Instance()->getLinkSubnetMap();
+    cout << mm.size() << endl;
     for(map<pair<int,int>, Subnet>::iterator it = mm.begin(); it!=mm.end(); ++it){
         cout << it->first.first << " " << it->first.second << " " << it->second.toString()<<endl;
     }
