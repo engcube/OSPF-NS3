@@ -100,7 +100,6 @@ map<pair<int,int>, Subnet>& ConfLoader::getLinkSubnetMap(){
 }
 
 void ConfLoader::addItem2LinkSubnetMap(int index1, int index2, Subnet& subnet){
-    cout << "add " << index1 << " " << index2 << " " << subnet.toString() << endl;
     m_LinkSubnet[make_pair<int,int>(index1,index2)] = subnet;
 }
   
@@ -121,6 +120,8 @@ void ConfLoader::update(int id, map<Subnet, int>& table){
   if(id < m_CoreNum){
       for(int i=0;i<m_ToRNum+m_BorderNum;i++){
           table[getSubnetByID(id, i+m_CoreNum)] = i+1;
+      }
+      for(int i=0;i<m_ToRNum;i++){
           table[getSubnetByID(i+m_CoreNum, i+getTotalNum())] = i+1;
       }
       /*std::vector<Subnet> subnets = ConfLoader::Instance()->getSubnets();
@@ -136,7 +137,7 @@ void ConfLoader::update(int id, map<Subnet, int>& table){
         if(id == (i+m_CoreNum)){
             table[getSubnetByID(id, id+m_ToRNum+m_BorderNum)] = m_CoreNum+1;
         }else{
-            table[getSubnetByID(id, id+id+m_ToRNum+m_BorderNum)] = 1;
+            table[getSubnetByID(i+m_CoreNum, i+m_CoreNum+m_ToRNum+m_BorderNum)] = 1;
         }
       }
   }else{

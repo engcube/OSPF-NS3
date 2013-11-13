@@ -58,14 +58,14 @@ int main (int argc, char *argv[])
   int total = nNodes + TOR_NUM;
   
   float app_start_time = 1.0;
-  float app_stop_time = 50.0;
+  float app_stop_time = 2.0;
 
   uint32_t stopTime = 600;
 
   string dataRate = "100Mbps";//"1Gbps";
   string delay = "0ms";
   string dest_ip = "10.0.1.2";
-  string sendRate = "1Mb/s";//"100Mb/s";
+  string sendRate = "0.1Mb/s";//"100Mb/s";
   uint16_t port = 9;   // Discard port (RFC 863)
   int sendNode = nNodes+3;
   int destNode = nNodes+2;
@@ -152,7 +152,6 @@ int main (int argc, char *argv[])
           ConfLoader::Instance()->addSubnet(subnet);
           i++;
       }
-      cout << "-------" << endl;
       i = 0;
       for(list<NetDeviceContainer>::iterator it= netDeviceContainers_2.begin(); it!=netDeviceContainers_2.end(); ++it){
           stringstream ss;
