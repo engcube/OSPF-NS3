@@ -160,6 +160,10 @@ int main (int argc, char *argv[])
           //cout << b << endl;
           Ipv4AddressHelper ipv4AddrHelper;
           ipv4AddrHelper.SetBase (b.c_str(), "255.255.255.0");
+          Subnet subnet(b,SUBNET_MASK);
+          int index1 = i/(TOR_NUM+BORDER_NUM);
+          int index2 = i%(TOR_NUM+BORDER_NUM)+CORE_NUM;
+          ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
           Ipv4InterfaceContainer ii = ipv4AddrHelper.Assign (*it);
           ipv4InterfaceContainers.push_back(ii);
           i++;
@@ -174,11 +178,20 @@ int main (int argc, char *argv[])
           //cout << b << endl;
           Ipv4AddressHelper ipv4;
           ipv4.SetBase (b.c_str(), "255.255.255.0");
+          Subnet subnet(b,SUBNET_MASK);
+          int index1 = i+CORE_NUM;
+          int index2 = i+CORE_NUM+TOR_NUM+BORDER_NUM;
+          ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
+
           Ipv4InterfaceContainer ii = ipv4.Assign (*it);
           ipv4InterfaceContainers.push_back(ii);
           i++;
       }
 
+    map<pair<int,int>, Subnet> mm = ConfLoader::Instance()->getLinkSubnetMap();
+    for(map<pair<int,int>, Subnet>::iterator it = mm.begin(); it!=mm.end(); ++it){
+        cout << it->first.first << " " << it->first.second << " " << it->second.toString()<<endl;
+    }
       //Ipv4InterfaceContainer interfaces = ipv4AddrHelper.Assign (devices);
       //Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Create Applications.");

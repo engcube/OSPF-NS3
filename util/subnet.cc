@@ -29,6 +29,32 @@ Subnet::Subnet(uint32_t address, int mask){
 	this->mask = mask_tmp;
 }
 
+Subnet::Subnet(string addr, int mask){
+	uint32_t address;
+	stringstream ss(addr);
+	string item;
+	while(getline(ss,item,'.')){
+		address = address*256+atoi(item.c_str());
+	}
+
+	uint32_t mask_tmp = 0;
+	if (mask>=0 && mask < 32){
+		for(int i=31;i>=32-mask;i--){
+			mask_tmp += (uint32_t)pow(2, i);
+			//cout << mask_tmp << endl;
+		}
+	}else{
+		cout << "invaild parameters" << endl;
+		return;
+	}
+	if((address&(~mask_tmp))!=0){
+		cout << "invaild parameters" << endl;
+		return;
+	}
+	this->address = address;
+	this->mask = mask_tmp;
+}
+
 Subnet::Subnet(const Subnet& subnet){
 	address = subnet.address;
 	mask = subnet.mask;

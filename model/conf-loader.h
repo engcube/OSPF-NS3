@@ -36,16 +36,13 @@ public:
   uint32_t getAddressStart() const;
 
 
-  map<int, Subnet>& getIndexSubnetMap();
-  void addItem2IndexSubnetMap(int index, Subnet& subnet);
-
+  map<pair<int,int>, Subnet>& getLinkSubnetMap();
+  void addItem2LinkSubnetMap(int index1, int index2, Subnet& subnet);
+  pair<int,int> getLinkBySubnet(Subnet& subnet);
+  Subnet& getSubnetByID(int index1, int index2);
 
   void setNodeContainer(NodeContainer& nc);
   NodeContainer& getNodeContainer();
-
-  int getIndexBySubnet(Subnet& subnet);
-  Subnet& getSubnetByID(int id);
-
 
   string getUpdateMsgString(){return UPDATE_MSG;};
 
@@ -84,7 +81,7 @@ private:
       BORDER,
   };
 
-  map<int, Subnet> index_subnet_map;
+  map<pair<int,int>, Subnet> m_LinkSubnet;
 
   int m_CoreNum;
   int m_ToRNum;

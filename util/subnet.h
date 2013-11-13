@@ -33,6 +33,8 @@ public:
 	bool operator < (const Subnet & cmp) const{
 		return address < cmp.address;
 	};
+	Subnet(string addr, int mask);
+	
 private:
 	uint32_t address;
 	uint32_t mask;

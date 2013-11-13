@@ -56,14 +56,6 @@ int ConfLoader::getTotalNum() const{
 }
 
 
-map<int, Subnet>& ConfLoader::getIndexSubnetMap(){
-  return index_subnet_map;
-}
-
-void ConfLoader::addItem2IndexSubnetMap(int index, Subnet& subnet){
-  index_subnet_map[index] = subnet;
-}
-
 void ConfLoader::setNodeContainer(NodeContainer& nc){
     m_nodes = nc;
 }
@@ -71,23 +63,6 @@ void ConfLoader::setNodeContainer(NodeContainer& nc){
 NodeContainer& ConfLoader::getNodeContainer(){
     return m_nodes;
 }
-
-
-int ConfLoader::getIndexBySubnet(Subnet& subnet){
-    for(map<int, Subnet>::iterator it = index_subnet_map.begin(); it!=index_subnet_map.end(); ++it){
-        if (it->second.equals(subnet)){
-            return it->first;
-        }
-    }
-    return -1;
-}
-
-
-
-Subnet& ConfLoader::getSubnetByID(int id){
-    return index_subnet_map[id];
-}
-
 
 //----------------------
 
@@ -117,6 +92,28 @@ int ConfLoader::calcDestInterfaceBySource(int id, int interface){
     }else{
         return m_CoreNum+1;
     }
+}
+
+
+map<pair<int,int>, Subnet>& ConfLoader::getLinkSubnetMap(){
+    return m_LinkSubnet;
+}
+
+void ConfLoader::addItem2LinkSubnetMap(int index1, int index2, Subnet& subnet){
+    m_LinkSubnet[make_pair<int,int>(index1,index2)] = subnet;
+}
+  
+pair<int,int> ConfLoader::getLinkBySubnet(Subnet& subnet){
+    for(map<pair<int,int>, Subnet>::iterator it = m_LinkSubnet.begin(); it!=m_LinkSubnet.end(); ++it){
+        if (it->second.equals(subnet)){
+            return it->first;
+        }
+    }
+    return pair<int,int>();
+}
+
+Subnet& ConfLoader::getSubnetByID(int index1, int index2){
+    return m_LinkSubnet[make_pair<int,int>(index1,index2)];
 }
 
 }
