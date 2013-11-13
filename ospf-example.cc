@@ -10,6 +10,8 @@
 #include "ns3/nstime.h"
 
 #include "ns3/ipv4-ospf-routing-helper.h"
+#include "ns3/conf-loader.h"
+
 
 #include <list>
 #include <string>
@@ -47,6 +49,9 @@ int main (int argc, char *argv[])
   int TOR_NUM = 4;
   int BORDER_NUM = 2;
   
+  int SUBNET_MASK = 24;
+  uint32_t ADDRESS_START = 0x0a000000; // 10.0.0.1
+
   int nNodes = CORE_NUM + TOR_NUM + BORDER_NUM;
   int total = nNodes + TOR_NUM;
   
@@ -67,6 +72,12 @@ int main (int argc, char *argv[])
   uint32_t packetSize = 512;
 
   
+  ConfLoader::Instance()->setCoreNum(CORE_NUM);
+  ConfLoader::Instance()->setToRNum(TOR_NUM);
+  ConfLoader::Instance()->setBorderNum(BORDER_NUM);
+  ConfLoader::Instance()->setSubnetMask(SUBNET_MASK);
+  ConfLoader::Instance()->setAddressStart(ADDRESS_START);
+
   CommandLine cmd;
   bool enableFlowMonitor = false;
   cmd.AddValue ("EnableMonitor", "Enable Flow Monitor", enableFlowMonitor);
@@ -80,6 +91,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Create nodes.");
   NodeContainer c;
   c.Create (total);
+  ConfLoader::Instance()->setNodeContainer(c);
 
   list<NodeContainer> nodeContainers;
 
@@ -207,6 +219,15 @@ int main (int argc, char *argv[])
 
   cout << "Run Simulation." << endl;
   
+  Ptr<Node> n1 = c.Get (sendNode);
+  Ptr<Ipv4> ipv4 = n1->GetObject<Ipv4> ();
+  // The first ifIndex is 0 for loopback, then the first p2p is numbered 1,
+  // then the next p2p is numbered 2
+  uint32_t ipv4ifIndex = 1;
+
+  Simulator::Schedule (Seconds (2),&Ipv4::SetDown,ipv4, ipv4ifIndex);
+  Simulator::Schedule (Seconds (10),&Ipv4::SetUp,ipv4, ipv4ifIndex);
+
   for(int i=1; i<simulateTime/simulateInterval;i++){
     Time onInterval = Seconds (i*simulateInterval);
     Simulator::Schedule (onInterval, &update);

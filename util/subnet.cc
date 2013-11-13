@@ -92,7 +92,7 @@ bool Subnet::equals(Subnet other) const{
 	return false;
 }
 
-bool Subnet::contains(Ipv4Address dest){
+bool Subnet::contains(Ipv4Address dest) const{
 	return this->address == (this->mask & dest.Get());
 }
 

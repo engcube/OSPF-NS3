@@ -113,6 +113,7 @@ bool Ipv4OSPFRouting::update(){
 
 string Ipv4OSPFRouting::toString(){
     stringstream result;
+    result << m_id << "\tRoutingTable:" << endl;
     for(map<Subnet, int>::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
         result << it->first.toString() << "\t" << it->second << "\n";
     }
@@ -133,7 +134,26 @@ void Ipv4OSPFRouting::sendMessage(Ipv4Address ip, Ptr<Packet> packet){
 
 Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
 {
+  NS_LOG_LOGIC ("Looking for route for destination " << dest);
+  int out_interface = -1;
+  for(map<Subnet, int>::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
+      if(it->first.contains(dest)){
+          out_interface = it->second;
+      }
+  }
+  if(out_interface == -1){
+      return 0;
+  }
+  int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
+  int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
+  Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
+
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
+  rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
+  rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
+  rtentry->SetGateway (Ipv4Address("0.0.0.0"));
+  rtentry->SetOutputDevice (m_ipv4->GetNetDevice (out_interface));
+
   return rtentry;
 }
 
@@ -167,8 +187,59 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
 { 
   NS_LOG_FUNCTION (this << p << header << header.GetSource () << header.GetDestination () << idev << &lcb << &ecb);
   // Check if input device supports IP
+  NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
+  uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() );
-  return false;
+  
+  for (uint32_t j = 0; j < m_ipv4->GetNInterfaces (); j++)
+    {
+      for (uint32_t i = 0; i < m_ipv4->GetNAddresses (j); i++)
+        {
+          Ipv4InterfaceAddress iaddr = m_ipv4->GetAddress (j, i);
+          Ipv4Address addr = iaddr.GetLocal ();
+          if (addr.IsEqual (header.GetDestination ()))
+            {
+              if (j == iif)
+                {
+                  NS_LOG_LOGIC ("For me (destination " << addr << " match)");
+                }
+              else
+                {
+                  NS_LOG_LOGIC ("For me (destination " << addr << " match) on another interface " << header.GetDestination ());
+                }
+              lcb (p, header, iif);
+              return true;
+            }
+          if (header.GetDestination ().IsEqual (iaddr.GetBroadcast ()))
+            {
+              NS_LOG_LOGIC ("For me (interface broadcast address)");
+              lcb (p, header, iif);
+              return true;
+            }
+          NS_LOG_LOGIC ("Address "<< addr << " not a match");
+        }
+    }
+    if (m_ipv4->IsForwarding (iif) == false)
+    {
+      NS_LOG_LOGIC ("Forwarding disabled for this interface");
+      ecb (p, header, Socket::ERROR_NOROUTETOHOST);
+      return false;
+    }
+  // Next, try to find a route
+  NS_LOG_LOGIC ("Unicast destination- looking up global route");
+  Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetDestination ());
+  if (rtentry != 0)
+    {
+      NS_LOG_LOGIC ("Found unicast destination- calling unicast callback");
+      ucb (rtentry, p, header);
+      return true;
+    }
+  else
+    {
+      NS_LOG_LOGIC ("Did not find unicast destination- returning false");
+      return false; // Let other routing protocols try to handle this
+                    // route request.
+    }
 }
 
 void 

@@ -29,7 +29,7 @@
 #include "ns3/ipv4-routing-protocol.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/ospf-router-interface.h"
-//#include "ns3/conf-loader.h"
+#include "ns3/conf-loader.h"
 
 #include "ns3/simulator.h"
 

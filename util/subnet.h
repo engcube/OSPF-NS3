@@ -29,7 +29,7 @@ public:
 	uint32_t getMask() const;
 	string uint32ToAddress(uint32_t x) const;
 	bool equals(Subnet other) const;
-	bool contains(Ipv4Address dest);
+	bool contains(Ipv4Address dest) const;
 	bool operator < (const Subnet & cmp) const{
 		return address < cmp.address;
 	};
