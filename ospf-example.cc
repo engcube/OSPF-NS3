@@ -36,14 +36,10 @@ void update(){
 int main (int argc, char *argv[])
 {
   //LogComponentEnable ("OnOffApplication", LOG_LEVEL_INFO);
-  //LogComponentEnable ("DceManager", LOG_LEVEL_INFO);
-  //LogComponentEnable ("DceApplication", LOG_LEVEL_INFO);
-  //LogComponentEnable ("Ipv4DceRoutingHelper", LOG_LEVEL_INFO);
-  //LogComponentEnable ("Ipv4DceRouting", LOG_LEVEL_INFO);
-
-  //LogComponentEnable ("QuaggaHelper", LOG_LEVEL_INFO);
-  LogComponentEnable ("OSPFRoutingHelper", LOG_LEVEL_INFO);
-  //LogComponentEnable ("Ipv4OSPFRouting", LOG_LEVEL_INFO);
+  //LogComponentEnable ("OSPFRoutingHelper", LOG_LEVEL_ALL);
+  //LogComponentEnable ("Ipv4OSPFRouting", LOG_LEVEL_ALL);
+  //LogComponentEnable ("Ipv4L3Protocol", LOG_LEVEL_ALL);
+  //LogComponentEnableAll(LOG_LEVEL_ALL);
 
 
 
@@ -58,7 +54,7 @@ int main (int argc, char *argv[])
   int total = nNodes + TOR_NUM;
   
   float app_start_time = 1.0;
-  float app_stop_time = 2.0;
+  float app_stop_time = 3.0;
 
   uint32_t stopTime = 600;
 
@@ -67,12 +63,13 @@ int main (int argc, char *argv[])
   string dest_ip = "10.0.1.2";
   string sendRate = "0.1Mb/s";//"100Mb/s";
   uint16_t port = 9;   // Discard port (RFC 863)
-  int sendNode = nNodes+3;
-  int destNode = nNodes+2;
+  int sendNode = nNodes+2;
+  int destNode = nNodes+1;
   int simulateTime = (int)app_stop_time;
   int simulateInterval = 3;
   uint32_t packetSize = 512;
-
+  float upTime  = 2.5;
+  float downTime = 1.5;
   
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
@@ -265,9 +262,8 @@ int main (int argc, char *argv[])
   // The first ifIndex is 0 for loopback, then the first p2p is numbered 1,
   // then the next p2p is numbered 2
   uint32_t ipv4ifIndex = 1;
-
-  Simulator::Schedule (Seconds (2),&Ipv4::SetDown,ipv4, ipv4ifIndex);
-  Simulator::Schedule (Seconds (10),&Ipv4::SetUp,ipv4, ipv4ifIndex);
+  Simulator::Schedule (Seconds (downTime),&Ipv4::SetDown, ipv4, ipv4ifIndex);
+  Simulator::Schedule (Seconds (upTime),&Ipv4::SetUp, ipv4, ipv4ifIndex);
 
   for(int i=1; i<simulateTime/simulateInterval;i++){
     Time onInterval = Seconds (i*simulateInterval);

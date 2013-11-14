@@ -147,7 +147,7 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
   int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
-  cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
+  //cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
   rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
   rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
