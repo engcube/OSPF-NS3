@@ -28,6 +28,7 @@
 #include "ns3/ipv4-routing-table-entry.h"
 #include "ns3/boolean.h"
 #include "ipv4-ospf-routing.h"
+#include "ns3/ospf-tag.h"
 
 #include <sstream>
 
@@ -120,6 +121,26 @@ string Ipv4OSPFRouting::toString(){
     return result.str();
 }
 
+void Ipv4OSPFRouting::sendHelloMessage(){
+    /*string ss = ConfLoader::Instance()->getHelloMsgString();
+    int len = ss.size();
+    char str[len];
+    strcpy(str, ss.c_str());
+    Ptr<Packet> packet = Create<Packet>(reinterpret_cast<const uint8_t*>(str), (const uint32_t)len);
+    */
+    Ptr<Packet> packet = Create<Packet>(1);
+    OSPFTag tag;
+    tag.setType(4);
+    packet->AddPacketTag(tag);
+
+    Ptr<Socket> m_socket = Socket::CreateSocket (ConfLoader::Instance()->getNodeContainer().Get(m_id), TypeId::LookupByName ("ns3::UdpSocketFactory"));
+    m_socket->SetAllowBroadcast(true);
+    m_socket->Bind ();
+    m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
+    m_socket->Send (packet);
+    cout << m_id << " send a hello message" << endl;
+}
+
 
 void Ipv4OSPFRouting::send2Peer(Ptr<Packet> packet){
 }
@@ -142,12 +163,13 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
       }
   }
   if(out_interface == -1){
+      cout << "No route found!" << endl;
       return 0;
   }
   int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
-  //cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
+  cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
   rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
   rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());

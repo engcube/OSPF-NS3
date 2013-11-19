@@ -120,6 +120,8 @@ public:
   void setUpdateState(){m_update_state = true;};
   void resetUpdateState(){m_update_state = false;};
 
+  void sendHelloMessage();
+  
 protected:
   void DoDispose (void);
 

@@ -11,6 +11,7 @@ def build(bld):
     module.source = [
         'model/ipv4-ospf-routing.cc',
         'model/conf-loader.cc',
+        'model/ospf-tag.cc',
         'helper/ipv4-ospf-routing-helper.cc',
         'util/subnet.cc',
         ]
@@ -25,6 +26,7 @@ def build(bld):
     headers.source = [
         'model/ipv4-ospf-routing.h',
         'model/conf-loader.h',
+        'model/ospf-tag.h',
         'helper/ipv4-ospf-routing-helper.h',
         'util/subnet.h',
         ]

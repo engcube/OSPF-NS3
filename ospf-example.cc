@@ -32,6 +32,11 @@ void update(){
   action_time ++;
 }
 
+void Hello(){
+    for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
+        ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->sendHelloMessage();
+    }
+}
 
 int main (int argc, char *argv[])
 {
@@ -43,6 +48,7 @@ int main (int argc, char *argv[])
 
 
 
+  int HelloInternal = 2;
   int CORE_NUM = 2;
   int TOR_NUM = 4;
   int BORDER_NUM = 2;
@@ -56,7 +62,7 @@ int main (int argc, char *argv[])
   float app_start_time = 1.0;
   float app_stop_time = 3.0;
 
-  uint32_t stopTime = 600;
+  uint32_t stopTime = 6;
 
   string dataRate = "100Mbps";//"1Gbps";
   string delay = "0ms";
@@ -223,9 +229,11 @@ int main (int argc, char *argv[])
 
   //pointToPoint.EnablePcapAll ("dce-quagga-ospfd");
 
+  //cout << destNode << endl;
   OnOffHelper onoff ("ns3::UdpSocketFactory", 
                      Address (InetSocketAddress (c.Get(destNode)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal(), port)));
-     
+                     //Address (InetSocketAddress ("255.255.255.255", port)));
+
   onoff.SetConstantRate (DataRate (sendRate), packetSize);
   ApplicationContainer apps = onoff.Install (c.Get (sendNode));
 
@@ -268,6 +276,12 @@ int main (int argc, char *argv[])
   for(int i=1; i<simulateTime/simulateInterval;i++){
     Time onInterval = Seconds (i*simulateInterval);
     Simulator::Schedule (onInterval, &update);
+  }
+
+  int N = stopTime/HelloInternal;
+  for(int i=0; i< N; i++){
+    Time onInterval = Seconds(i*HelloInternal);
+    Simulator::Schedule (onInterval, &Hello);
   }
 
   if (stopTime != 0)

@@ -44,8 +44,6 @@ public:
   void setNodeContainer(NodeContainer& nc);
   NodeContainer& getNodeContainer();
 
-  string getUpdateMsgString(){return UPDATE_MSG;};
-
   void incrementLossPacketCounter(){ this->m_lossPacketCounter++;};
   int getLossPacketCounter(){ return this->m_lossPacketCounter;};
 
@@ -73,12 +71,14 @@ public:
 
   void update(int id, map<Subnet, int>& table);
 
+  string getHelloMsgString(){
+      return string("hello");
+  }
 private:
 
   string UPDATE_MSG;
 
 	ConfLoader(){
-    UPDATE_MSG = "update!";
     m_lossPacketCounter = 0;
   };
 	ConfLoader(ConfLoader const&){};

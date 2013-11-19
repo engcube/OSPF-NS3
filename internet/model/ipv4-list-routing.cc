@@ -24,6 +24,10 @@
 #include "ns3/ipv4-static-routing.h"
 #include "ipv4-list-routing.h"
 
+#include "ns3/conf-loader.h"
+
+#include "ns3/ospf-tag.h"
+
 #include <iostream>
  using namespace std;
 
@@ -155,6 +159,40 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
       else
         {
           cout << Simulator::Now() << " " << m_ipv4->GetObject<Node> ()->GetId ()<<" Packet received!" << endl;
+          OSPFTag tag;
+          uint8_t type;
+          //Ptr<Packet> pp = p->Copy();
+          //bool found = pp->RemovePacketTag (tag);
+          bool found = p->PeekPacketTag(tag);
+          if (found){
+            type = tag.getType ();
+            if(type == 4){
+                cout << "receive hello message" << endl;
+            }else{
+                cout << "receive not-hello message" << endl;
+            }
+          }else{
+            cout << "receive message tag not found" << endl;
+          }
+          /*string ss = ConfLoader::Instance()->getHelloMsgString();
+          int len = ss.size();
+          char str[len];
+          strcpy(str, ss.c_str());
+          uint8_t buffer[len];
+          p->CopyData (buffer, (const uint32_t)len);
+          bool isHello = true;
+          for(int i=0;i<len;i++){
+            cout << str[i] << " " << buffer[i] << " " << (uint8_t)str[i] << endl;
+            if(buffer[i] != (uint8_t)str[i]){
+              isHello = false;
+              break;
+            }
+          }
+          if(isHello){
+              cout << "receive hello message" << endl;
+          }else{
+            cout << "receive not-hello message" << endl;
+          }*/
           //lcb (p, header, iif);
           return true;
         }
