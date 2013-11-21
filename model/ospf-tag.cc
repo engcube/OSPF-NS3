@@ -20,15 +20,17 @@ TypeId OSPFTag::GetInstanceTypeId (void) const{
 }
 
 uint32_t OSPFTag::GetSerializedSize (void) const{
-    return 1;
+    return 5;
 }
 
 void OSPFTag::Serialize (TagBuffer i) const{    
   i.WriteU8(type);
+  i.WriteU16(node);
 }
 
 void OSPFTag::Deserialize (TagBuffer i){
     type = i.ReadU8();
+    node = i.ReadU16();
 }
 
 void OSPFTag::Print (std::ostream &os) const{

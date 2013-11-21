@@ -76,8 +76,6 @@ public:
   }
 private:
 
-  string UPDATE_MSG;
-
 	ConfLoader(){
     m_lossPacketCounter = 0;
   };

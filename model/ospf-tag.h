@@ -14,7 +14,7 @@ namespace ns3{
 class OSPFTag : public Tag
 {
 public:
-   OSPFTag(){};
+   OSPFTag(){this->type = 0;};
    static TypeId GetTypeId (void);
    virtual TypeId GetInstanceTypeId (void) const;
    virtual uint32_t GetSerializedSize (void) const;
@@ -27,14 +27,12 @@ public:
    void setType(uint8_t type){this->type = type;};
    uint8_t getType(){return this->type;};
 
-   string toString(){
-      stringstream ss;
-      ss << "type: "<< (int)type << endl; 
-      return ss.str();
-   };
+   void setNode(uint16_t node){this->node = node;};
+   uint16_t getNode(){return this->node;};  
 private:
-   //0 -- hello
+   //1 -- hello
    uint8_t type;
+   uint16_t node;
 };
 
 }

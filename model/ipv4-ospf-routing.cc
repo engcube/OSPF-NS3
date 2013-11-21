@@ -112,6 +112,31 @@ bool Ipv4OSPFRouting::update(){
   return true;
 }
 
+void Ipv4OSPFRouting::addToNeighbors(int neighbor, Time time){
+    m_Neighbors[neighbor] = time;
+}
+  
+map<int, Time>& Ipv4OSPFRouting::getNeighbors(){
+    return m_Neighbors;
+}
+
+void Ipv4OSPFRouting::removeFromNeighbors(int neighbor){
+    m_Neighbors.erase(neighbor);
+}
+
+void Ipv4OSPFRouting::addToLinkStateDatabase(int node, int cost){
+    m_LinkStateDatabase[node] = cost;
+}
+
+map<int, int>& Ipv4OSPFRouting::getLinkStateDatabase(){
+    return m_LinkStateDatabase;
+}
+  
+void Ipv4OSPFRouting::removeFromLinkStateDatabase(int node){
+    m_LinkStateDatabase.erase(node);
+}
+
+
 string Ipv4OSPFRouting::toString(){
     stringstream result;
     result << m_id << "\tRoutingTable:" << endl;
@@ -122,15 +147,10 @@ string Ipv4OSPFRouting::toString(){
 }
 
 void Ipv4OSPFRouting::sendHelloMessage(){
-    /*string ss = ConfLoader::Instance()->getHelloMsgString();
-    int len = ss.size();
-    char str[len];
-    strcpy(str, ss.c_str());
-    Ptr<Packet> packet = Create<Packet>(reinterpret_cast<const uint8_t*>(str), (const uint32_t)len);
-    */
     Ptr<Packet> packet = Create<Packet>(1);
     OSPFTag tag;
-    tag.setType(4);
+    tag.setType(1);
+    tag.setNode(m_id);
     packet->AddPacketTag(tag);
 
     Ptr<Socket> m_socket = Socket::CreateSocket (ConfLoader::Instance()->getNodeContainer().Get(m_id), TypeId::LookupByName ("ns3::UdpSocketFactory"));

@@ -121,7 +121,15 @@ public:
   void resetUpdateState(){m_update_state = false;};
 
   void sendHelloMessage();
-  
+
+  void addToNeighbors(int neighbor, Time time);
+  map<int, Time>& getNeighbors();
+  void removeFromNeighbors(int neighbor);
+
+  void addToLinkStateDatabase(int node, int cost);
+  map<int, int>& getLinkStateDatabase();
+  void removeFromLinkStateDatabase(int node);
+
 protected:
   void DoDispose (void);
 
@@ -133,6 +141,9 @@ private:
   bool m_update_state;
 
   map<Subnet, int> m_OSPFRoutingTable;
+
+  map<int, Time> m_Neighbors;
+  map<int, int> m_LinkStateDatabase;
 
   int m_id;
   /// Set to true if packets are randomly routed among ECMP; set to false for using only one route consistently

@@ -158,41 +158,28 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
         }
       else
         {
-          cout << Simulator::Now() << " " << m_ipv4->GetObject<Node> ()->GetId ()<<" Packet received!" << endl;
+          Ptr<Node> node = m_ipv4->GetObject<Node>();
+          cout << Simulator::Now() << " " << node->GetId ()<<" Packet received!" << endl;
           OSPFTag tag;
           uint8_t type;
+          uint16_t from;
           //Ptr<Packet> pp = p->Copy();
           //bool found = pp->RemovePacketTag (tag);
           bool found = p->PeekPacketTag(tag);
           if (found){
-            type = tag.getType ();
-            if(type == 4){
+            type = tag.getType();
+            from = tag.getNode();
+            if(type == 1){
                 cout << "receive hello message" << endl;
+                node->GetObject<Ipv4OSPFRouting>() -> addToNeighbors(node, Simulator::Now());
+            }else if(type == 2){
+                cout << "receive update message" << endl;
             }else{
                 cout << "receive not-hello message" << endl;
             }
           }else{
-            cout << "receive message tag not found" << endl;
+              cout << "receive message tag not found" << endl;
           }
-          /*string ss = ConfLoader::Instance()->getHelloMsgString();
-          int len = ss.size();
-          char str[len];
-          strcpy(str, ss.c_str());
-          uint8_t buffer[len];
-          p->CopyData (buffer, (const uint32_t)len);
-          bool isHello = true;
-          for(int i=0;i<len;i++){
-            cout << str[i] << " " << buffer[i] << " " << (uint8_t)str[i] << endl;
-            if(buffer[i] != (uint8_t)str[i]){
-              isHello = false;
-              break;
-            }
-          }
-          if(isHello){
-              cout << "receive hello message" << endl;
-          }else{
-            cout << "receive not-hello message" << endl;
-          }*/
           //lcb (p, header, iif);
           return true;
         }
