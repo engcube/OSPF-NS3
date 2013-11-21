@@ -74,6 +74,14 @@ public:
   string getHelloMsgString(){
       return string("hello");
   }
+
+  void setUnavailableInterval(int UnavailableInterval){
+      this->m_UnavailableInterval = UnavailableInterval;
+  };
+
+  int getUnavailableInterval(){
+      return this->m_UnavailableInterval;
+  };
 private:
 
 	ConfLoader(){
@@ -92,6 +100,7 @@ private:
   map<pair<int,int>, Subnet> m_LinkSubnet;
   std::vector<Subnet> m_Subnets;
 
+  int m_UnavailableInterval;
   int m_CoreNum;
   int m_ToRNum;
   int m_BorderNum;

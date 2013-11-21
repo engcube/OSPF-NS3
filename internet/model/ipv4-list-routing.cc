@@ -25,7 +25,7 @@
 #include "ipv4-list-routing.h"
 
 #include "ns3/conf-loader.h"
-
+#include "ns3/ipv4-ospf-routing.h"
 #include "ns3/ospf-tag.h"
 
 #include <iostream>
@@ -163,15 +163,13 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
           OSPFTag tag;
           uint8_t type;
           uint16_t from;
-          //Ptr<Packet> pp = p->Copy();
-          //bool found = pp->RemovePacketTag (tag);
           bool found = p->PeekPacketTag(tag);
           if (found){
             type = tag.getType();
             from = tag.getNode();
             if(type == 1){
                 cout << "receive hello message" << endl;
-                node->GetObject<Ipv4OSPFRouting>() -> addToNeighbors(node, Simulator::Now());
+                node->GetObject<Ipv4OSPFRouting>() -> addToNeighbors(from, Simulator::Now());
             }else if(type == 2){
                 cout << "receive update message" << endl;
             }else{

@@ -38,6 +38,12 @@ void Hello(){
     }
 }
 
+void CheckHNeighbor(){
+    for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
+        ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->checkNeighbors();
+    }
+}
+
 int main (int argc, char *argv[])
 {
   //LogComponentEnable ("OnOffApplication", LOG_LEVEL_INFO);
@@ -47,8 +53,9 @@ int main (int argc, char *argv[])
   //LogComponentEnableAll(LOG_LEVEL_ALL);
 
 
-
-  int HelloInternal = 2;
+  int UnavailableInterval = 3;
+  int HelloInterval = 2;
+  int CheckNeighborInterval = 0.1;
   int CORE_NUM = 2;
   int TOR_NUM = 4;
   int BORDER_NUM = 2;
@@ -62,7 +69,7 @@ int main (int argc, char *argv[])
   float app_start_time = 1.0;
   float app_stop_time = 3.0;
 
-  uint32_t stopTime = 6;
+  uint32_t stopTime = 20;
 
   string dataRate = "100Mbps";//"1Gbps";
   string delay = "0ms";
@@ -74,9 +81,11 @@ int main (int argc, char *argv[])
   int simulateTime = (int)app_stop_time;
   int simulateInterval = 3;
   uint32_t packetSize = 512;
-  float upTime  = 2.5;
-  float downTime = 1.5;
+
+  float downTime = 2;
+  float upTime  = 10;
   
+  ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
   ConfLoader::Instance()->setBorderNum(BORDER_NUM);
@@ -278,10 +287,16 @@ int main (int argc, char *argv[])
     Simulator::Schedule (onInterval, &update);
   }
 
-  int N = stopTime/HelloInternal;
+  int N = stopTime/HelloInterval;
   for(int i=0; i< N; i++){
-    Time onInterval = Seconds(i*HelloInternal);
+    Time onInterval = Seconds(i*HelloInterval);
     Simulator::Schedule (onInterval, &Hello);
+  }
+
+  N = stopTime/CheckNeighborInterval;
+  for(int i=0; i< N; i++){
+    Time onInterval = Seconds(i*CheckNeighborInterval);
+    Simulator::Schedule (onInterval, &CheckHNeighbor);
   }
 
   if (stopTime != 0)

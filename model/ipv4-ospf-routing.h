@@ -130,6 +130,9 @@ public:
   map<int, int>& getLinkStateDatabase();
   void removeFromLinkStateDatabase(int node);
 
+  void checkNeighbors();
+  void sendLSAMessage();
+
 protected:
   void DoDispose (void);
 
@@ -142,7 +145,9 @@ private:
 
   map<Subnet, int> m_OSPFRoutingTable;
 
-  map<int, Time> m_Neighbors;
+  map<int, Time> m_LastNeighbors;
+  map<int, Time> m_CurNeighbors;
+
   map<int, int> m_LinkStateDatabase;
 
   int m_id;

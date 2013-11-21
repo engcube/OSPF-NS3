@@ -113,15 +113,15 @@ bool Ipv4OSPFRouting::update(){
 }
 
 void Ipv4OSPFRouting::addToNeighbors(int neighbor, Time time){
-    m_Neighbors[neighbor] = time;
+    m_CurNeighbors[neighbor] = time;
 }
   
 map<int, Time>& Ipv4OSPFRouting::getNeighbors(){
-    return m_Neighbors;
+    return m_CurNeighbors;
 }
 
 void Ipv4OSPFRouting::removeFromNeighbors(int neighbor){
-    m_Neighbors.erase(neighbor);
+    m_CurNeighbors.erase(neighbor);
 }
 
 void Ipv4OSPFRouting::addToLinkStateDatabase(int node, int cost){
@@ -161,6 +161,34 @@ void Ipv4OSPFRouting::sendHelloMessage(){
     cout << m_id << " send a hello message" << endl;
 }
 
+void Ipv4OSPFRouting::sendLSAMessage(){
+    cout << "send LSA" << endl;
+}
+
+void Ipv4OSPFRouting::checkNeighbors(){
+    Time now = Simulator::Now();
+    for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
+        if(now - it->second > Seconds(ConfLoader::Instance()->getUnavailableInterval())){
+            m_CurNeighbors.erase(it);
+        }
+    }
+    bool toNotify = false;
+    for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
+        if(m_LastNeighbors.find(it->first) == m_LastNeighbors.end()){
+            toNotify = true;
+        }
+    }
+
+    for(map<int, Time>::iterator it = m_LastNeighbors.begin(); it != m_LastNeighbors.end(); ++it){
+        if(m_CurNeighbors.find(it->first) == m_CurNeighbors.end()){
+            toNotify = true;
+        }
+    }
+    if(toNotify){
+        sendLSAMessage();
+    }
+    m_LastNeighbors = m_CurNeighbors;
+}
 
 void Ipv4OSPFRouting::send2Peer(Ptr<Packet> packet){
 }
