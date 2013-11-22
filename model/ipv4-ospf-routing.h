@@ -131,9 +131,11 @@ public:
   void removeFromLinkStateDatabase(int node);
 
   void checkNeighbors();
-  void sendLSAMessage(int node, vector<int>& lsa);
+  void sendLSAMessage(int node, vector<uint16_t>& lsa);
 
   void handleMessage(Ptr<const Packet> packet);
+  void toString(vector<uint16_t>& v);
+
 protected:
   void DoDispose (void);
 
@@ -149,7 +151,7 @@ private:
   map<int, Time> m_LastNeighbors;
   map<int, Time> m_CurNeighbors;
 
-  map<int, vector<int> > m_LSAs;
+  map<int, vector<uint16_t> > m_LSAs;
 
   map<int, int> m_LinkStateDatabase;
 

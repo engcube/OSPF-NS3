@@ -30,16 +30,25 @@ public:
    void setNode(uint16_t node){this->node = node;};
    uint16_t getNode(){return this->node;};  
 
-   void setLSA(int node, vector<int>& lsa){
+   void setLSA(int node, vector<uint16_t>& lsa){
       this->lsa_node = node;
+      this->lsa_size = lsa.size();
       this->lsa = lsa;
-   }
+   };
+
+   uint16_t getLSANode(){return lsa_node;};
+   uint16_t getLSASize(){return lsa_size;};
+   vector<uint16_t>& getLSA(){return lsa;};
+
 private:
    //1 -- hello
+   //2 -- LSA update
    uint8_t type;
    uint16_t node;
+
    uint16_t lsa_node;
-   vector<int> lsa;
+   uint16_t lsa_size;
+   vector<uint16_t> lsa;
 };
 
 }

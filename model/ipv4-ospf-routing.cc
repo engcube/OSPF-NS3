@@ -31,6 +31,7 @@
 #include "ns3/ospf-tag.h"
 
 #include <sstream>
+#include <algorithm>
 
 NS_LOG_COMPONENT_DEFINE ("Ipv4OSPFRouting");
 
@@ -161,7 +162,8 @@ void Ipv4OSPFRouting::sendHelloMessage(){
     cout << m_id << " send a hello message" << endl;
 }
 
-void Ipv4OSPFRouting::sendLSAMessage(int node, vector<int>& lsa){
+void Ipv4OSPFRouting::sendLSAMessage(int node, vector<uint16_t>& lsa){
+    m_LSAs[node] = lsa;
     Ptr<Packet> packet = Create<Packet>(1);
     OSPFTag tag;
     tag.setType(2);
@@ -174,9 +176,15 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, vector<int>& lsa){
     m_socket->Bind ();
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
-    cout << "send LSA" << endl;
+    cout << m_id << " send LSA of " << node << endl;
 }
 
+void Ipv4OSPFRouting::toString(vector<uint16_t>& v){
+    for(int i=0; i< (int)v.size(); i++){
+      cout << (int)v[i] << " ";
+    }
+    cout << endl;
+}
 void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
           OSPFTag tag;
           uint8_t type;
@@ -190,16 +198,51 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                 cout << "receive hello message" << endl;
                 addToNeighbors(from, Simulator::Now());
             }else if(type == 2){
-                cout << "receive update message" << endl;
+                cout << "receive update message from " << (int)from << endl;
+                uint16_t lsa_node = tag.getLSANode();
+                if((int)lsa_node != m_id){
+                    vector<uint16_t> lsa = tag.getLSA();
+                    if(m_LSAs.find((int)lsa_node)==m_LSAs.end()){
+                        cout << "not found index" << endl;
+                        return sendLSAMessage(lsa_node, lsa);
+                    }else{
+                        vector<uint16_t> my = m_LSAs[(int)lsa_node];
+                        if(my.size()!=lsa.size()){                        
+                            cout << "size not equal" << endl;
+                            return sendLSAMessage(lsa_node, lsa);
+                        }
+
+                        for(vector<uint16_t>::iterator it = my.begin(); it != my.end(); ++it){
+                          if(find(lsa.begin(), lsa.end(), *it)==lsa.end()){
+                              cout << "my not found in lsa" << endl;
+                              toString(my);
+                              toString(lsa);
+                              return sendLSAMessage(lsa_node, lsa);
+                          }
+                        }
+
+                        for(vector<uint16_t>::iterator it = lsa.begin(); it != lsa.end(); ++it){
+                          if(find(my.begin(), my.end(), *it)==my.end()){
+                              cout << "lsa not found in my" << endl;
+                              toString(my);
+                              toString(lsa);
+                              return sendLSAMessage(lsa_node, lsa);
+                          }
+                        }
+                    }
+                }
+                cout << (int)lsa_node << " has existed in " << m_id << " now has " << m_LSAs.size() << endl;
             }else{
                 cout << "receive not-hello message" << endl;
             }
           }else{
-              cout << "receive message tag not found" << endl;
+              cout << "receive normal message" << endl;
           }
 }
 
 void Ipv4OSPFRouting::checkNeighbors(){
+    //cout << m_id << " now has " << m_LSAs.size() << endl;
+
     Time now = Simulator::Now();
     for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
         if(now - it->second > Seconds(ConfLoader::Instance()->getUnavailableInterval())){
@@ -219,10 +262,11 @@ void Ipv4OSPFRouting::checkNeighbors(){
         }
     }
     if(toNotify){
-        vector<int> lsa;
+        vector<uint16_t> lsa;
         for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
-            lsa.push_back(it->first);
+            lsa.push_back((uint16_t)it->first);
         }
+        cout << "neighbors change" << endl;
         sendLSAMessage(m_id, lsa);
     }
     m_LastNeighbors = m_CurNeighbors;
