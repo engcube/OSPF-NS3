@@ -161,8 +161,42 @@ void Ipv4OSPFRouting::sendHelloMessage(){
     cout << m_id << " send a hello message" << endl;
 }
 
-void Ipv4OSPFRouting::sendLSAMessage(){
+void Ipv4OSPFRouting::sendLSAMessage(int node, vector<int>& lsa){
+    Ptr<Packet> packet = Create<Packet>(1);
+    OSPFTag tag;
+    tag.setType(2);
+    tag.setNode(m_id);
+    tag.setLSA(node, lsa);
+    packet->AddPacketTag(tag);
+
+    Ptr<Socket> m_socket = Socket::CreateSocket (ConfLoader::Instance()->getNodeContainer().Get(m_id), TypeId::LookupByName ("ns3::UdpSocketFactory"));
+    m_socket->SetAllowBroadcast(true);
+    m_socket->Bind ();
+    m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
+    m_socket->Send (packet);
     cout << "send LSA" << endl;
+}
+
+void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
+          OSPFTag tag;
+          uint8_t type;
+          uint16_t from;
+          bool found = packet->PeekPacketTag(tag);
+          if (found){
+            type = tag.getType();
+            from = tag.getNode();
+            //cout << from;
+            if(type == 1){
+                cout << "receive hello message" << endl;
+                addToNeighbors(from, Simulator::Now());
+            }else if(type == 2){
+                cout << "receive update message" << endl;
+            }else{
+                cout << "receive not-hello message" << endl;
+            }
+          }else{
+              cout << "receive message tag not found" << endl;
+          }
 }
 
 void Ipv4OSPFRouting::checkNeighbors(){
@@ -185,7 +219,11 @@ void Ipv4OSPFRouting::checkNeighbors(){
         }
     }
     if(toNotify){
-        sendLSAMessage();
+        vector<int> lsa;
+        for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
+            lsa.push_back(it->first);
+        }
+        sendLSAMessage(m_id, lsa);
     }
     m_LastNeighbors = m_CurNeighbors;
 }

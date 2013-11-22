@@ -160,24 +160,7 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
         {
           Ptr<Node> node = m_ipv4->GetObject<Node>();
           cout << Simulator::Now() << " " << node->GetId ()<<" Packet received!" << endl;
-          OSPFTag tag;
-          uint8_t type;
-          uint16_t from;
-          bool found = p->PeekPacketTag(tag);
-          if (found){
-            type = tag.getType();
-            from = tag.getNode();
-            if(type == 1){
-                cout << "receive hello message" << endl;
-                node->GetObject<Ipv4OSPFRouting>() -> addToNeighbors(from, Simulator::Now());
-            }else if(type == 2){
-                cout << "receive update message" << endl;
-            }else{
-                cout << "receive not-hello message" << endl;
-            }
-          }else{
-              cout << "receive message tag not found" << endl;
-          }
+          node->GetObject<Ipv4OSPFRouting>()->handleMessage(p);
           //lcb (p, header, iif);
           return true;
         }

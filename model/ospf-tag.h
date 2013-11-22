@@ -29,10 +29,17 @@ public:
 
    void setNode(uint16_t node){this->node = node;};
    uint16_t getNode(){return this->node;};  
+
+   void setLSA(int node, vector<int>& lsa){
+      this->lsa_node = node;
+      this->lsa = lsa;
+   }
 private:
    //1 -- hello
    uint8_t type;
    uint16_t node;
+   uint16_t lsa_node;
+   vector<int> lsa;
 };
 
 }

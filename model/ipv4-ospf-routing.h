@@ -131,8 +131,9 @@ public:
   void removeFromLinkStateDatabase(int node);
 
   void checkNeighbors();
-  void sendLSAMessage();
+  void sendLSAMessage(int node, vector<int>& lsa);
 
+  void handleMessage(Ptr<const Packet> packet);
 protected:
   void DoDispose (void);
 
@@ -147,6 +148,8 @@ private:
 
   map<int, Time> m_LastNeighbors;
   map<int, Time> m_CurNeighbors;
+
+  map<int, vector<int> > m_LSAs;
 
   map<int, int> m_LinkStateDatabase;
 
@@ -163,6 +166,7 @@ private:
   Ptr<Ipv4Route> LookupOSPFRoutingTable (Ipv4Address dest);
 
   Ptr<Ipv4> m_ipv4;
+
 };
 
 } // Namespace ns3

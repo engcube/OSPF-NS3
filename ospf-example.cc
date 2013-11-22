@@ -38,7 +38,7 @@ void Hello(){
     }
 }
 
-void CheckHNeighbor(){
+void CheckNeighbor(){
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->checkNeighbors();
     }
@@ -55,7 +55,7 @@ int main (int argc, char *argv[])
 
   int UnavailableInterval = 3;
   int HelloInterval = 2;
-  int CheckNeighborInterval = 0.1;
+  float CheckNeighborInterval = 0.1;
   int CORE_NUM = 2;
   int TOR_NUM = 4;
   int BORDER_NUM = 2;
@@ -293,10 +293,10 @@ int main (int argc, char *argv[])
     Simulator::Schedule (onInterval, &Hello);
   }
 
-  N = stopTime/CheckNeighborInterval;
+  N = (int)(stopTime/CheckNeighborInterval);
   for(int i=0; i< N; i++){
     Time onInterval = Seconds(i*CheckNeighborInterval);
-    Simulator::Schedule (onInterval, &CheckHNeighbor);
+    Simulator::Schedule (onInterval, &CheckNeighbor);
   }
 
   if (stopTime != 0)
