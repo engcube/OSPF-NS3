@@ -82,7 +82,7 @@ int main (int argc, char *argv[])
   int simulateInterval = 3;
   uint32_t packetSize = 512;
 
-  float downTime = 2;
+  float downTime = 3;
   float upTime  = 10;
   
   int downNode = 0;

@@ -127,6 +127,7 @@ Ipv4ListRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDe
   NS_LOG_LOGIC ("Done checking " << GetTypeId ());
   NS_LOG_LOGIC ("");
   sockerr = Socket::ERROR_NOROUTETOHOST;
+  cout << "No route found in ListRouting" << endl;
   return 0;
 }
 
