@@ -60,6 +60,8 @@ public:
 
   int calcDestNodeBySource(int id, int interface);
   int calcDestInterfaceBySource(int id, int interface);
+  int calcSourceInterfaceByNode(int id, int node);
+  Subnet& calcSubnetByNode(int node);
 
   vector<Subnet>& getSubnets(){
       return m_Subnets;
@@ -82,6 +84,15 @@ public:
   int getUnavailableInterval(){
       return this->m_UnavailableInterval;
   };
+
+  void addToNodeSubnet(int id, Subnet& subnet){
+      m_NodeSubnets[id] = subnet;
+  };
+
+  Subnet& getSubnetByNode(int id){
+      return m_NodeSubnets[id];
+  };
+
 private:
 
 	ConfLoader(){
@@ -99,6 +110,7 @@ private:
 
   map<pair<int,int>, Subnet> m_LinkSubnet;
   std::vector<Subnet> m_Subnets;
+  map<int, Subnet> m_NodeSubnets;
 
   int m_UnavailableInterval;
   int m_CoreNum;

@@ -94,6 +94,25 @@ int ConfLoader::calcDestInterfaceBySource(int id, int interface){
     }
 }
 
+//node >= getTotalNum()
+// may have bugs
+int ConfLoader::calcSourceInterfaceByNode(int id, int node){
+    if(id < m_CoreNum){
+        return node-getTotalNum()+1;
+    }else if(id < getTotalNum()){
+        if(node-id == m_ToRNum+m_BorderNum){
+            return m_CoreNum+1;
+        }else{
+            return 1;
+        }
+    }else{
+        return 1;
+    }
+}
+
+Subnet& ConfLoader::calcSubnetByNode(int node){
+    return m_Subnets[node];
+}
 
 map<pair<int,int>, Subnet>& ConfLoader::getLinkSubnetMap(){
     return m_LinkSubnet;

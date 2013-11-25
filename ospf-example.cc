@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
   int total = nNodes + TOR_NUM;
   
   float app_start_time = 1.0;
-  float app_stop_time = 3.0;
+  float app_stop_time = 19.0;
 
   uint32_t stopTime = 20;
 
@@ -85,6 +85,9 @@ int main (int argc, char *argv[])
   float downTime = 2;
   float upTime  = 10;
   
+  int downNode = 0;
+  int downInterface = 3;
+
   ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
@@ -174,6 +177,7 @@ int main (int argc, char *argv[])
           int index2 = i+CORE_NUM+TOR_NUM+BORDER_NUM;
           ConfLoader::Instance()->addItem2LinkSubnetMap(index1, index2, subnet);
           ConfLoader::Instance()->addSubnet(subnet);
+          ConfLoader::Instance()->addToNodeSubnet(index2, subnet);
           i++;
       }
 
@@ -274,11 +278,11 @@ int main (int argc, char *argv[])
 
   cout << "Run Simulation." << endl;
   
-  Ptr<Node> n1 = c.Get (sendNode);
+  Ptr<Node> n1 = c.Get (downNode);
   Ptr<Ipv4> ipv4 = n1->GetObject<Ipv4> ();
   // The first ifIndex is 0 for loopback, then the first p2p is numbered 1,
   // then the next p2p is numbered 2
-  uint32_t ipv4ifIndex = 1;
+  uint32_t ipv4ifIndex = downInterface;
   Simulator::Schedule (Seconds (downTime),&Ipv4::SetDown, ipv4, ipv4ifIndex);
   Simulator::Schedule (Seconds (upTime),&Ipv4::SetUp, ipv4, ipv4ifIndex);
 

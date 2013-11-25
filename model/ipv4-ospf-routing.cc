@@ -177,6 +177,81 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, vector<uint16_t>& lsa){
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
     cout << m_id << " send LSA of " << node << endl;
+    Dijkstra();
+}
+
+void Ipv4OSPFRouting::Dijkstra(){
+    int source = m_id;
+    int total = ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum();
+    int dist[total];
+    bool visited[total];
+    int previous[total];
+    for(int i=0; i<total; i++){
+        dist[i] = 1000000;
+        visited[i] = false;
+        previous[i] = source;
+    }
+    dist[source] = 0;
+    vector<int> Q;
+    Q.push_back(source);
+    while(Q.size()!=0){
+        int u = 0;
+        int min = 1000000;
+        for(int i=0;i<total;i++){
+            if(!visited[i]){
+                if(dist[i]<min){
+                    u = i;
+                    min = dist[i];
+                }
+            }
+        }
+        Q.erase(std::remove(Q.begin(), Q.end(), u), Q.end());
+        visited[u] = true;
+        vector<uint16_t> neighbors =m_LSAs[u];
+        int alt = dist[u]+1;
+        for(vector<uint16_t>::iterator it = neighbors.begin(); it!=neighbors.end(); ++it){
+            int v = (int)*it;
+            if(alt<dist[v]&&!visited[v]){
+                dist[v] = alt;
+                previous[v] = u;
+                Q.push_back(v);
+            }
+        }  
+    }
+
+    m_LinkStateDatabase.clear();
+    for(int i=0;i<total;i++){
+        if(previous[i] == source){
+            m_LinkStateDatabase[i] = previous[i];
+            continue;
+        }
+        while(find(m_LSAs[m_id].begin(), m_LSAs[m_id].end(), previous[i])==m_LSAs[m_id].end()){
+            previous[i] = previous[previous[i]];
+        }
+        m_LinkStateDatabase[i] = previous[i];
+    }
+
+
+    //cout << "Link State of "<<m_id << endl;
+    m_OSPFRoutingTable.clear();
+    for(map<int,int>::iterator it = m_LinkStateDatabase.begin(); it!=m_LinkStateDatabase.end(); ++it){
+        Subnet subnet;
+        m_OSPFRoutingTable[subnet] = ConfLoader::Instance()->calcSourceInterfaceByNode(source, it->second);
+    }
+
+    int tor = ConfLoader::Instance()->getToRNum();
+    for(int i=0; i<tor; i++){
+        int node = i+ConfLoader::Instance()->getTotalNum();
+        m_OSPFRoutingTable[ConfLoader::Instance()->getSubnetByNode(node)]
+          = ConfLoader::Instance()->calcSourceInterfaceByNode(source, node);
+
+        cout << node << " : " << ConfLoader::Instance()->getSubnetByNode(node).toString() << " : " << endl;
+    }
+
+    cout << "OSPFRoutingTable of "<<m_id << endl;
+    for(map<Subnet, int>::iterator it=m_OSPFRoutingTable.begin(); it!=m_OSPFRoutingTable.end();++it){
+        cout << it->first.toString() << " " <<it->second << endl;
+    }
 }
 
 void Ipv4OSPFRouting::toString(vector<uint16_t>& v){
@@ -203,18 +278,18 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                 if((int)lsa_node != m_id){
                     vector<uint16_t> lsa = tag.getLSA();
                     if(m_LSAs.find((int)lsa_node)==m_LSAs.end()){
-                        cout << "not found index" << endl;
+                        //cout << "not found index" << endl;
                         return sendLSAMessage(lsa_node, lsa);
                     }else{
                         vector<uint16_t> my = m_LSAs[(int)lsa_node];
                         if(my.size()!=lsa.size()){                        
-                            cout << "size not equal" << endl;
+                            //cout << "size not equal" << endl;
                             return sendLSAMessage(lsa_node, lsa);
                         }
 
                         for(vector<uint16_t>::iterator it = my.begin(); it != my.end(); ++it){
                           if(find(lsa.begin(), lsa.end(), *it)==lsa.end()){
-                              cout << "my not found in lsa" << endl;
+                              //cout << "my not found in lsa" << endl;
                               toString(my);
                               toString(lsa);
                               return sendLSAMessage(lsa_node, lsa);
@@ -223,7 +298,7 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
 
                         for(vector<uint16_t>::iterator it = lsa.begin(); it != lsa.end(); ++it){
                           if(find(my.begin(), my.end(), *it)==my.end()){
-                              cout << "lsa not found in my" << endl;
+                              //cout << "lsa not found in my" << endl;
                               toString(my);
                               toString(lsa);
                               return sendLSAMessage(lsa_node, lsa);
@@ -231,7 +306,7 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                         }
                     }
                 }
-                cout << (int)lsa_node << " has existed in " << m_id << " now has " << m_LSAs.size() << endl;
+                //cout << (int)lsa_node << " has existed in " << m_id << " now has " << m_LSAs.size() << endl;
             }else{
                 cout << "receive not-hello message" << endl;
             }

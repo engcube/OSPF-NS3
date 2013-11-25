@@ -135,6 +135,7 @@ public:
 
   void handleMessage(Ptr<const Packet> packet);
   void toString(vector<uint16_t>& v);
+  void Dijkstra();
 
 protected:
   void DoDispose (void);
