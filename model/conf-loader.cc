@@ -97,13 +97,14 @@ int ConfLoader::calcDestInterfaceBySource(int id, int interface){
 //node >= getTotalNum()
 // may have bugs
 int ConfLoader::calcSourceInterfaceByNode(int id, int node){
+    if (id==node) return 0;
     if(id < m_CoreNum){
-        return node-getTotalNum()+1;
+        return node-getCoreNum()+1;
     }else if(id < getTotalNum()){
         if(node-id == m_ToRNum+m_BorderNum){
             return m_CoreNum+1;
         }else{
-            return 1;
+            return node+1;
         }
     }else{
         return 1;

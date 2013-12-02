@@ -40,6 +40,8 @@
 #include "ipv4-interface.h"
 #include "ipv4-raw-socket-impl.h"
 
+#include "ns3/conf-loader.h"
+#include "ns3/ospf-tag.h"
 #include <iostream>
 using namespace std;
 
@@ -480,7 +482,16 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
           else
             {
               NS_LOG_LOGIC ("Dropping received packet -- interface is down");
-              cout << "Dropping received packet -- interface is down" << endl;
+              
+              OSPFTag tag;
+              bool found = packet->PeekPacketTag(tag);
+              if (found){
+                cout << "Dropping received tag packet -- interface is down" << endl;
+              }else{
+                cout << "Dropping normal packet -- interface is down" << endl;
+                ConfLoader::Instance()->incrementLossPacketCounter();
+                ConfLoader::Instance()->setCurrentTime(Simulator::Now());
+              }
               Ipv4Header ipHeader;
               packet->RemoveHeader (ipHeader);
               m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);

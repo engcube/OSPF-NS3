@@ -44,10 +44,26 @@ public:
   void setNodeContainer(NodeContainer& nc);
   NodeContainer& getNodeContainer();
 
-  void incrementLossPacketCounter(){ this->m_lossPacketCounter++;};
+  void incrementLossPacketCounter(){ 
+    if(!isDown){
+        return;
+    }
+    this->m_lossPacketCounter++;
+  };
+
+  void prepareLinkDown(){
+      if(isDown){
+          return;
+      }
+      isDown = true;
+      cout << "Lost packets: " << m_lossPacketCounter << endl;
+      cout << "Duration: " <<  m_startTime << " to " << m_stopTime << endl;
+      this->m_lossPacketCounter=0;
+  }
   int getLossPacketCounter(){ return this->m_lossPacketCounter;};
 
   void setCurrentTime(Time time){
+    if(!isDown){ return;}
     m_stopTime = time;
     if(m_startTime.IsZero()){
         m_startTime = time;
@@ -56,7 +72,13 @@ public:
 
   Time getDiffTime(){
       return m_stopTime - m_startTime;
-  }
+  };
+
+  Time& getStartTime(){
+    return m_startTime;
+  };
+
+  Time& getStopTime(){ return m_stopTime;};
 
   int calcDestNodeBySource(int id, int interface);
   int calcDestInterfaceBySource(int id, int interface);
@@ -97,6 +119,7 @@ private:
 
 	ConfLoader(){
     m_lossPacketCounter = 0;
+    isDown = false;
   };
 	ConfLoader(ConfLoader const&){};
 	//ConfLoader& operator=(ConfLoader const&){};
@@ -119,6 +142,7 @@ private:
   int m_SubnetMask;
   uint32_t m_AddressStart;
 
+  bool isDown;
   int m_lossPacketCounter;
   Time m_startTime;
   Time m_stopTime;

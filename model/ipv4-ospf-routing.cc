@@ -234,18 +234,22 @@ void Ipv4OSPFRouting::Dijkstra(){
 
     //cout << "Link State of "<<m_id << endl;
     m_OSPFRoutingTable.clear();
-    for(map<int,int>::iterator it = m_LinkStateDatabase.begin(); it!=m_LinkStateDatabase.end(); ++it){
-        Subnet subnet;
-        m_OSPFRoutingTable[subnet] = ConfLoader::Instance()->calcSourceInterfaceByNode(source, it->second);
-    }
+    /*for(map<int,int>::iterator it = m_LinkStateDatabase.begin(); it!=m_LinkStateDatabase.end(); ++it){
+        //Subnet subnet;
+        //m_OSPFRoutingTable[subnet] = ConfLoader::Instance()->calcSourceInterfaceByNode(source, it->second);
+        cout << it->first << " " << it->second << endl;
+    }*/
 
     int tor = ConfLoader::Instance()->getToRNum();
     for(int i=0; i<tor; i++){
         int node = i+ConfLoader::Instance()->getTotalNum();
+        int previous = m_LinkStateDatabase[node];
+        if(previous == source){
+            previous = node;
+        }
         m_OSPFRoutingTable[ConfLoader::Instance()->getSubnetByNode(node)]
-          = ConfLoader::Instance()->calcSourceInterfaceByNode(source, node);
-
-        cout << node << " : " << ConfLoader::Instance()->getSubnetByNode(node).toString() << " : " << endl;
+          = ConfLoader::Instance()->calcSourceInterfaceByNode(source, previous);
+          // = ConfLoader::Instance()->calcSourceInterfaceByNode(source, node);
     }
 
     cout << "OSPFRoutingTable of "<<m_id << endl;
@@ -312,6 +316,7 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
             }
           }else{
               cout << "receive normal message" << endl;
+              ConfLoader::Instance()->prepareLinkDown();
           }
 }
 

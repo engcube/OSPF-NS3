@@ -33,12 +33,14 @@ void update(){
 }
 
 void Hello(){
+  cout << Simulator::Now() << "----------------hello---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->sendHelloMessage();
     }
 }
 
 void CheckNeighbor(){
+  cout << Simulator::Now() << "----------------checkNeighbor---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->checkNeighbors();
     }
@@ -68,25 +70,23 @@ int main (int argc, char *argv[])
   
   float app_start_time = 1.0;
   float app_stop_time = 19.0;
-
   uint32_t stopTime = 20;
+  float downTime = 3;
+  float upTime  = 10;
+
+  int downNode = 0;
+  int downInterface = 3;
 
   string dataRate = "100Mbps";//"1Gbps";
   string delay = "0ms";
   string dest_ip = "10.0.1.2";
-  string sendRate = "0.1Mb/s";//"100Mb/s";
+  string sendRate = "100Mb/s";//"100Mb/s";
   uint16_t port = 9;   // Discard port (RFC 863)
   int sendNode = nNodes+2;
   int destNode = nNodes+1;
   int simulateTime = (int)app_stop_time;
   int simulateInterval = 3;
   uint32_t packetSize = 512;
-
-  float downTime = 3;
-  float upTime  = 10;
-  
-  int downNode = 0;
-  int downInterface = 3;
 
   ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
@@ -310,6 +310,7 @@ int main (int argc, char *argv[])
   Simulator::Run ();
   cout << "Done." << endl;
   Simulator::Destroy ();
-
+  cout << "Lost packets: " << ConfLoader::Instance()->getLossPacketCounter() << endl;
+  cout << "Duration: " <<  ConfLoader::Instance()->getStartTime() << " to " << ConfLoader::Instance()->getStopTime() << endl;
   return 0;
 }
