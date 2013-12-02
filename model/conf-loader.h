@@ -115,11 +115,20 @@ public:
       return m_NodeSubnets[id];
   };
 
+  void addLSA(int index, vector<uint16_t>& lsa){ 
+    m_lsas[index] = lsa;
+    m_lsaNum ++;
+  };
+
+  int getLSANum(){return m_lsaNum;};
+  
+  vector<uint16_t>& getLSA(int index){ return m_lsas[index];};
 private:
 
 	ConfLoader(){
     m_lossPacketCounter = 0;
     isDown = false;
+    m_lsaNum = 0;
   };
 	ConfLoader(ConfLoader const&){};
 	//ConfLoader& operator=(ConfLoader const&){};
@@ -149,6 +158,8 @@ private:
 
   NodeContainer m_nodes;
 
+  map<int, vector<uint16_t> > m_lsas;
+  int m_lsaNum;
 };
 
 }

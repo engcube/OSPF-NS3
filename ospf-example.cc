@@ -59,7 +59,7 @@ int main (int argc, char *argv[])
   int HelloInterval = 2;
   float CheckNeighborInterval = 0.1;
   int CORE_NUM = 2;
-  int TOR_NUM = 4;
+  int TOR_NUM = 10;
   int BORDER_NUM = 2;
   
   int SUBNET_MASK = 24;

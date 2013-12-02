@@ -162,13 +162,14 @@ void Ipv4OSPFRouting::sendHelloMessage(){
     cout << m_id << " send a hello message" << endl;
 }
 
-void Ipv4OSPFRouting::sendLSAMessage(int node, vector<uint16_t>& lsa){
-    m_LSAs[node] = lsa;
+void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
+    m_LSAs[node] = ConfLoader::Instance()->getLSA(index);
     Ptr<Packet> packet = Create<Packet>(1);
     OSPFTag tag;
     tag.setType(2);
     tag.setNode(m_id);
-    tag.setLSA(node, lsa);
+    //tag.setLSA(node, lsa);
+    tag.setLSAIndex((uint32_t)index);
     packet->AddPacketTag(tag);
 
     Ptr<Socket> m_socket = Socket::CreateSocket (ConfLoader::Instance()->getNodeContainer().Get(m_id), TypeId::LookupByName ("ns3::UdpSocketFactory"));
@@ -280,32 +281,33 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                 cout << "receive update message from " << (int)from << endl;
                 uint16_t lsa_node = tag.getLSANode();
                 if((int)lsa_node != m_id){
-                    vector<uint16_t> lsa = tag.getLSA();
+                    uint32_t index = tag.getLSAIndex();
+                    vector<uint16_t> lsa = ConfLoader::Instance()->getLSA(index);
                     if(m_LSAs.find((int)lsa_node)==m_LSAs.end()){
                         //cout << "not found index" << endl;
-                        return sendLSAMessage(lsa_node, lsa);
+                        return sendLSAMessage(lsa_node, index);
                     }else{
                         vector<uint16_t> my = m_LSAs[(int)lsa_node];
                         if(my.size()!=lsa.size()){                        
                             //cout << "size not equal" << endl;
-                            return sendLSAMessage(lsa_node, lsa);
+                            return sendLSAMessage(lsa_node, index);
                         }
 
                         for(vector<uint16_t>::iterator it = my.begin(); it != my.end(); ++it){
                           if(find(lsa.begin(), lsa.end(), *it)==lsa.end()){
                               //cout << "my not found in lsa" << endl;
-                              toString(my);
-                              toString(lsa);
-                              return sendLSAMessage(lsa_node, lsa);
+                              //toString(my);
+                              //toString(lsa);
+                              return sendLSAMessage(lsa_node, index);
                           }
                         }
 
                         for(vector<uint16_t>::iterator it = lsa.begin(); it != lsa.end(); ++it){
                           if(find(my.begin(), my.end(), *it)==my.end()){
                               //cout << "lsa not found in my" << endl;
-                              toString(my);
-                              toString(lsa);
-                              return sendLSAMessage(lsa_node, lsa);
+                              //toString(my);
+                              //toString(lsa);
+                              return sendLSAMessage(lsa_node, index);
                           }
                         }
                     }
@@ -347,7 +349,9 @@ void Ipv4OSPFRouting::checkNeighbors(){
             lsa.push_back((uint16_t)it->first);
         }
         cout << "neighbors change" << endl;
-        sendLSAMessage(m_id, lsa);
+        int index = ConfLoader::Instance()->getLSANum();
+        ConfLoader::Instance()->addLSA(index, lsa);
+        sendLSAMessage(m_id, index);
     }
     m_LastNeighbors = m_CurNeighbors;
 }

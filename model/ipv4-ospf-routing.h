@@ -131,7 +131,7 @@ public:
   void removeFromLinkStateDatabase(int node);
 
   void checkNeighbors();
-  void sendLSAMessage(int node, vector<uint16_t>& lsa);
+  void sendLSAMessage(int node, int index);
 
   void handleMessage(Ptr<const Packet> packet);
   void toString(vector<uint16_t>& v);
