@@ -486,9 +486,9 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
               OSPFTag tag;
               bool found = packet->PeekPacketTag(tag);
               if (found){
-                cout << "Dropping received tag packet -- interface is down" << endl;
+                //cout << "Dropping received tag packet -- interface is down" << endl;
               }else{
-                cout << "Dropping normal packet -- interface is down" << endl;
+                //cout << "Dropping normal packet -- interface is down" << endl;
                 ConfLoader::Instance()->incrementLossPacketCounter();
                 ConfLoader::Instance()->setCurrentTime(Simulator::Now());
               }

@@ -127,7 +127,7 @@ Ipv4ListRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDe
   NS_LOG_LOGIC ("Done checking " << GetTypeId ());
   NS_LOG_LOGIC ("");
   sockerr = Socket::ERROR_NOROUTETOHOST;
-  cout << "No route found in ListRouting" << endl;
+  //cout << "No route found in ListRouting" << endl;
   return 0;
 }
 
@@ -160,7 +160,7 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
       else
         {
           Ptr<Node> node = m_ipv4->GetObject<Node>();
-          cout << Simulator::Now() << " " << node->GetId ()<<" Packet received!" << endl;
+          //cout << Simulator::Now() << " " << node->GetId ()<<" Packet received!" << endl;
           node->GetObject<Ipv4OSPFRouting>()->handleMessage(p);
           //lcb (p, header, iif);
           return true;

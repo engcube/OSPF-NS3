@@ -28,19 +28,19 @@ void action(){
 }
 
 void update(){
-  //cout << "----------------update---------"<<endl;
+  cout << "----------------update---------"<< action_time << endl;
   action_time ++;
 }
 
 void Hello(){
-  cout << Simulator::Now() << "----------------hello---------"<<endl;
+  //cout << Simulator::Now() << "----------------hello---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->sendHelloMessage();
     }
 }
 
 void CheckNeighbor(){
-  cout << Simulator::Now() << "----------------checkNeighbor---------"<<endl;
+  //cout << Simulator::Now() << "----------------checkNeighbor---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->checkNeighbors();
     }
@@ -58,8 +58,8 @@ int main (int argc, char *argv[])
   int UnavailableInterval = 3;
   int HelloInterval = 2;
   float CheckNeighborInterval = 0.1;
-  int CORE_NUM = 2;
-  int TOR_NUM = 10;
+  int CORE_NUM = 4;
+  int TOR_NUM = 50;
   int BORDER_NUM = 2;
   
   int SUBNET_MASK = 24;
@@ -301,6 +301,10 @@ int main (int argc, char *argv[])
   for(int i=0; i< N; i++){
     Time onInterval = Seconds(i*CheckNeighborInterval);
     Simulator::Schedule (onInterval, &CheckNeighbor);
+  }
+  for(int i=0; i<(int)stopTime; i++){
+    Time onInterval = Seconds(i);
+    Simulator::Schedule(onInterval, &update);
   }
 
   if (stopTime != 0)

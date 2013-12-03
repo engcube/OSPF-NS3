@@ -159,7 +159,7 @@ void Ipv4OSPFRouting::sendHelloMessage(){
     m_socket->Bind ();
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
-    cout << m_id << " send a hello message" << endl;
+    //cout << m_id << " send a hello message" << endl;
 }
 
 void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
@@ -177,7 +177,7 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     m_socket->Bind ();
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
-    cout << m_id << " send LSA of " << node << endl;
+    //cout << m_id << " send LSA of " << node << endl;
     Dijkstra();
 }
 
@@ -253,10 +253,10 @@ void Ipv4OSPFRouting::Dijkstra(){
           // = ConfLoader::Instance()->calcSourceInterfaceByNode(source, node);
     }
 
-    cout << "OSPFRoutingTable of "<<m_id << endl;
+    /*cout << "OSPFRoutingTable of "<<m_id << endl;
     for(map<Subnet, int>::iterator it=m_OSPFRoutingTable.begin(); it!=m_OSPFRoutingTable.end();++it){
         cout << it->first.toString() << " " <<it->second << endl;
-    }
+    }*/
 }
 
 void Ipv4OSPFRouting::toString(vector<uint16_t>& v){
@@ -275,10 +275,10 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
             from = tag.getNode();
             //cout << from;
             if(type == 1){
-                cout << "receive hello message" << endl;
+                //cout << "receive hello message" << endl;
                 addToNeighbors(from, Simulator::Now());
             }else if(type == 2){
-                cout << "receive update message from " << (int)from << endl;
+                //cout << "receive update message from " << (int)from << endl;
                 uint16_t lsa_node = tag.getLSANode();
                 if((int)lsa_node != m_id){
                     uint32_t index = tag.getLSAIndex();
@@ -314,10 +314,10 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                 }
                 //cout << (int)lsa_node << " has existed in " << m_id << " now has " << m_LSAs.size() << endl;
             }else{
-                cout << "receive not-hello message" << endl;
+                //cout << "receive not-hello message" << endl;
             }
           }else{
-              cout << "receive normal message" << endl;
+              //cout << "receive normal message" << endl;
               ConfLoader::Instance()->prepareLinkDown();
           }
 }
@@ -348,7 +348,7 @@ void Ipv4OSPFRouting::checkNeighbors(){
         for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
             lsa.push_back((uint16_t)it->first);
         }
-        cout << "neighbors change" << endl;
+        //cout << "neighbors change" << endl;
         int index = ConfLoader::Instance()->getLSANum();
         ConfLoader::Instance()->addLSA(index, lsa);
         sendLSAMessage(m_id, index);
@@ -377,13 +377,13 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
       }
   }
   if(out_interface == -1){
-      cout << "No route found!" << endl;
+      //cout << "No route found!" << endl;
       return 0;
   }
   int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
-  cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
+  //cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
   rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
   rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
@@ -398,7 +398,7 @@ Ipv4OSPFRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDe
 {
   NS_LOG_FUNCTION (this << p << &header << oif << &sockerr);
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination());
-  cout << Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
+  //cout << Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   NS_LOG_LOGIC ("Unicast destination- looking up");
   Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetDestination ());
   if (rtentry)
@@ -426,7 +426,7 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
   NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() );
-  cout << Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
+  //cout << Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   for (uint32_t j = 0; j < m_ipv4->GetNInterfaces (); j++)
     {
       for (uint32_t i = 0; i < m_ipv4->GetNAddresses (j); i++)
@@ -444,7 +444,7 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
                   NS_LOG_LOGIC ("For me (destination " << addr << " match) on another interface " << header.GetDestination ());
                 }
               lcb (p, header, iif);
-              cout << "destination match!" <<endl;
+              //cout << "destination match!" <<endl;
               return true;
             }
           if (header.GetDestination ().IsEqual (iaddr.GetBroadcast ()))
