@@ -137,6 +137,16 @@ public:
   void toString(vector<uint16_t>& v);
   void Dijkstra();
 
+  void addNeighbor(int node);
+  void removeNeighbor(int node);
+  void updateNeighbors();
+
+  void setLSA(map<int, vector<uint16_t> > lsas){
+      m_LSAs = lsas;
+      Dijkstra();
+      cout << toString() << endl;
+  };
+
 protected:
   void DoDispose (void);
 

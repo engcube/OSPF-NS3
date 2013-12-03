@@ -40,14 +40,15 @@ public:
    uint16_t getLSASize(){return lsa_size;};
    vector<uint16_t>& getLSA(){return lsa;};
 
-   void setLSAIndex(uint32_t index){
+   void setLSA(int node, uint32_t index){
+      this->lsa_node = node;
       this->index = index;
    };
 
    uint32_t getLSAIndex(){
       return this->index;
    };
-   
+
 private:
    //1 -- hello
    //2 -- LSA update

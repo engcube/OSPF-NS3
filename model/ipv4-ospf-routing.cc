@@ -167,9 +167,9 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     Ptr<Packet> packet = Create<Packet>(1);
     OSPFTag tag;
     tag.setType(2);
-    tag.setNode(m_id);
-    //tag.setLSA(node, lsa);
-    tag.setLSAIndex((uint32_t)index);
+    tag.setNode((uint16_t)m_id);
+    tag.setLSA(node, (uint32_t)index);
+    //tag.setLSAIndex();
     packet->AddPacketTag(tag);
 
     Ptr<Socket> m_socket = Socket::CreateSocket (ConfLoader::Instance()->getNodeContainer().Get(m_id), TypeId::LookupByName ("ns3::UdpSocketFactory"));
@@ -177,7 +177,7 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     m_socket->Bind ();
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
-    //cout << m_id << " send LSA of " << node << endl;
+    //cout << Simulator::Now() << " " << m_id << " send LSA of " << node << endl;
     Dijkstra();
 }
 
@@ -280,6 +280,7 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
             }else if(type == 2){
                 //cout << "receive update message from " << (int)from << endl;
                 uint16_t lsa_node = tag.getLSANode();
+                //cout << m_id << " receive lsa of " << lsa_node << endl;
                 if((int)lsa_node != m_id){
                     uint32_t index = tag.getLSAIndex();
                     vector<uint16_t> lsa = ConfLoader::Instance()->getLSA(index);
@@ -320,6 +321,30 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
               //cout << "receive normal message" << endl;
               ConfLoader::Instance()->prepareLinkDown();
           }
+}
+
+void Ipv4OSPFRouting::addNeighbor(int node){
+    m_CurNeighbors[node] = Simulator::Now();
+    updateNeighbors();
+}
+
+void Ipv4OSPFRouting::removeNeighbor(int node){
+    if(m_CurNeighbors.find(node) != m_CurNeighbors.end()){
+        m_CurNeighbors.erase(node);
+        updateNeighbors();
+    }
+}
+
+void Ipv4OSPFRouting::updateNeighbors(){
+    vector<uint16_t> lsa;
+    for(map<int, Time>::iterator it = m_CurNeighbors.begin(); it != m_CurNeighbors.end(); ++it){
+            lsa.push_back((uint16_t)it->first);
+    }
+    //cout << "neighbors change" << endl;
+    int index = ConfLoader::Instance()->getLSANum();
+    ConfLoader::Instance()->addLSA(index, lsa);
+    sendLSAMessage(m_id, index);
+    m_LastNeighbors = m_CurNeighbors;
 }
 
 void Ipv4OSPFRouting::checkNeighbors(){
@@ -377,13 +402,13 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
       }
   }
   if(out_interface == -1){
-      //cout << "No route found!" << endl;
+      cout << "No route found!" << endl;
       return 0;
   }
   int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
-  //cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
+  //cout << Simulator::Now() << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
   rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
   rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());

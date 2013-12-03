@@ -24,23 +24,67 @@ NS_LOG_COMPONENT_DEFINE ("OspfExample");
 
 int action_time = 0;
 
-void action(){
+int downNode1 = 0;
+int downInterface1 = 3;
+
+void downAction(){
+    cout << "action down" << endl;
+    int downNode2 = ConfLoader::Instance()->getCoreNum()+downInterface1-1;
+    
+    ConfLoader::Instance()->getNodeContainer().Get (downNode1)->GetObject<Ipv4OSPFRouting>()->removeNeighbor(downNode2);
+    ConfLoader::Instance()->getNodeContainer().Get (downNode2)->GetObject<Ipv4OSPFRouting>()->removeNeighbor(downNode1);
+}
+
+void upAction(){
+    cout << "action up" << endl;
+    int downNode2 = ConfLoader::Instance()->getCoreNum()+downInterface1-1;
+    
+    ConfLoader::Instance()->getNodeContainer().Get (downNode1)->GetObject<Ipv4OSPFRouting>()->addNeighbor(downNode2);
+    ConfLoader::Instance()->getNodeContainer().Get (downNode2)->GetObject<Ipv4OSPFRouting>()->addNeighbor(downNode1);
+}
+
+void initLSAs(){
+    map<int, vector<uint16_t> > LSAs;
+    for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
+        std::vector<uint16_t> lsa;
+        if(i<ConfLoader::Instance()->getCoreNum()){
+            for(int j=ConfLoader::Instance()->getCoreNum(); j<ConfLoader::Instance()->getTotalNum(); j++){
+                lsa.push_back((uint16_t)j);
+            }
+        }else if(i<ConfLoader::Instance()->getTotalNum()){
+            for(int j=0; j<ConfLoader::Instance()->getCoreNum();j++){
+                lsa.push_back((uint16_t)j);
+            }
+            if(i<(ConfLoader::Instance()->getCoreNum()+ConfLoader::Instance()->getToRNum())){
+                lsa.push_back((uint16_t)(i+ConfLoader::Instance()->getBorderNum()+ConfLoader::Instance()->getToRNum()));
+            }
+        }else{
+            lsa.push_back((uint16_t)(i-(ConfLoader::Instance()->getBorderNum()+ConfLoader::Instance()->getToRNum())));
+        }
+        LSAs[i] = lsa;
+        for(std::vector<uint16_t>::iterator it = lsa.begin(); it!=lsa.end(); ++it){
+            ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->addToNeighbors((int)(*it), Simulator::Now());
+        }
+    }
+    for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
+        ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->setLSA(LSAs);
+    }
 }
 
 void update(){
-  cout << "----------------update---------"<< action_time << endl;
+  //cout << "----------------update---------"<<endl;
   action_time ++;
 }
 
 void Hello(){
-  //cout << Simulator::Now() << "----------------hello---------"<<endl;
+  cout << Simulator::Now() << "----------------hello---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->sendHelloMessage();
     }
 }
 
 void CheckNeighbor(){
-  //cout << Simulator::Now() << "----------------checkNeighbor---------"<<endl;
+  cout << Simulator::Now() << "----------------checkNeighbor---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
         ConfLoader::Instance()->getNodeContainer().Get(i)->GetObject<Ipv4OSPFRouting>()->checkNeighbors();
     }
@@ -55,11 +99,11 @@ int main (int argc, char *argv[])
   //LogComponentEnableAll(LOG_LEVEL_ALL);
 
 
-  int UnavailableInterval = 3;
-  int HelloInterval = 2;
-  float CheckNeighborInterval = 0.1;
+  //int UnavailableInterval = 3;
+  //int HelloInterval = 2;
+  //float CheckNeighborInterval = 0.1;
   int CORE_NUM = 4;
-  int TOR_NUM = 50;
+  int TOR_NUM = 10;
   int BORDER_NUM = 2;
   
   int SUBNET_MASK = 24;
@@ -69,26 +113,24 @@ int main (int argc, char *argv[])
   int total = nNodes + TOR_NUM;
   
   float app_start_time = 1.0;
-  float app_stop_time = 19.0;
-  uint32_t stopTime = 20;
-  float downTime = 3;
-  float upTime  = 10;
+  float app_stop_time = 10.0;
+  uint32_t stopTime = 11;
+  float downTime = 2;
+  float upTime  = 8;
 
-  int downNode = 0;
-  int downInterface = 3;
-
-  string dataRate = "100Mbps";//"1Gbps";
+  float findDelay = 0.1; //s
+  string dataRate = "1Gbps";//"1Gbps";
   string delay = "0ms";
   string dest_ip = "10.0.1.2";
-  string sendRate = "100Mb/s";//"100Mb/s";
+  string sendRate = "1Mb/s";//"100Mb/s";
   uint16_t port = 9;   // Discard port (RFC 863)
   int sendNode = nNodes+2;
   int destNode = nNodes+1;
-  int simulateTime = (int)app_stop_time;
-  int simulateInterval = 3;
+  //int simulateTime = (int)app_stop_time;
+  //int simulateInterval = 3;
   uint32_t packetSize = 512;
 
-  ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
+  //ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
   ConfLoader::Instance()->setBorderNum(BORDER_NUM);
@@ -278,15 +320,18 @@ int main (int argc, char *argv[])
 
   cout << "Run Simulation." << endl;
   
-  Ptr<Node> n1 = c.Get (downNode);
+  Ptr<Node> n1 = c.Get (downNode1);
   Ptr<Ipv4> ipv4 = n1->GetObject<Ipv4> ();
   // The first ifIndex is 0 for loopback, then the first p2p is numbered 1,
   // then the next p2p is numbered 2
-  uint32_t ipv4ifIndex = downInterface;
+  uint32_t ipv4ifIndex = downInterface1;
+  Simulator::Schedule (Seconds (0), &initLSAs);
   Simulator::Schedule (Seconds (downTime),&Ipv4::SetDown, ipv4, ipv4ifIndex);
+  Simulator::Schedule (Seconds (downTime+ findDelay ),&downAction);
   Simulator::Schedule (Seconds (upTime),&Ipv4::SetUp, ipv4, ipv4ifIndex);
+  Simulator::Schedule (Seconds (upTime+ findDelay ),&upAction);
 
-  for(int i=1; i<simulateTime/simulateInterval;i++){
+  /*for(int i=1; i<simulateTime/simulateInterval;i++){
     Time onInterval = Seconds (i*simulateInterval);
     Simulator::Schedule (onInterval, &update);
   }
@@ -301,11 +346,7 @@ int main (int argc, char *argv[])
   for(int i=0; i< N; i++){
     Time onInterval = Seconds(i*CheckNeighborInterval);
     Simulator::Schedule (onInterval, &CheckNeighbor);
-  }
-  for(int i=0; i<(int)stopTime; i++){
-    Time onInterval = Seconds(i);
-    Simulator::Schedule(onInterval, &update);
-  }
+  }*/
 
   if (stopTime != 0)
     {
