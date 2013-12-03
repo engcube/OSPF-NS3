@@ -527,7 +527,27 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
       socket->ForwardUp (packet, ipHeader, ipv4Interface);
     }
 
-  NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to process packets");
+NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to process packets");
+
+  //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  //uint32_t num = x->GetInteger(5,400);
+  //cout << "Random " << num << endl;
+  uint32_t num = 100;
+  Simulator::Schedule(MilliSeconds (num), &Ipv4L3Protocol::DelayReceive, this, packet, ipHeader, device, interface);
+
+  /*if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
+                                      MakeCallback (&Ipv4L3Protocol::IpForward, this),
+                                      MakeCallback (&Ipv4L3Protocol::IpMulticastForward, this),
+                                      MakeCallback (&Ipv4L3Protocol::LocalDeliver, this),
+                                      MakeCallback (&Ipv4L3Protocol::RouteInputError, this)
+                                      ))
+    {
+      NS_LOG_WARN ("No route found for forwarding packet.  Drop.");
+      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
+    }*/
+}
+
+void Ipv4L3Protocol::DelayReceive(Ptr<Packet> packet, Ipv4Header ipHeader, Ptr<NetDevice> device, uint32_t interface){
   if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
                                       MakeCallback (&Ipv4L3Protocol::IpForward, this),
                                       MakeCallback (&Ipv4L3Protocol::IpMulticastForward, this),
@@ -538,6 +558,8 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
       NS_LOG_WARN ("No route found for forwarding packet.  Drop.");
       m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
     }
+
+    cout << Simulator::Now() << " Delay Receive" << endl;
 }
 
 Ptr<Icmpv4L4Protocol> 
