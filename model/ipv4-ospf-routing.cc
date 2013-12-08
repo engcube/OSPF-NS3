@@ -179,6 +179,7 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     m_socket->Send (packet);
     //cout << Simulator::Now() << " " << m_id << " send LSA of " << node << endl;
     Dijkstra();
+    cout << toString() << endl;
 }
 
 void Ipv4OSPFRouting::Dijkstra(){
