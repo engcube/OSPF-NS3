@@ -30,6 +30,7 @@
 #include "ipv4-ospf-routing.h"
 #include "ns3/ospf-tag.h"
 
+#include "ns3/simulator.h"
 #include <sstream>
 #include <algorithm>
 
@@ -178,8 +179,9 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
     //cout << Simulator::Now() << " " << m_id << " send LSA of " << node << endl;
-    Dijkstra();
-    cout << toString() << endl;
+    Simulator::Schedule (Seconds (0.01), &Ipv4OSPFRouting::Dijkstra, this);
+    //Dijkstra();
+    //cout << toString() << endl;
 }
 
 void Ipv4OSPFRouting::Dijkstra(){
