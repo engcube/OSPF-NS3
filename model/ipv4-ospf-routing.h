@@ -110,8 +110,8 @@ public:
   int getID(){return m_id;};
   void setID(int index){m_id = index;};
 
-  void SetOSPFRoutingTable(map<Subnet, int>& grid);
-  map<Subnet, int>& GetOSPFRoutingTable (void);
+  void SetOSPFRoutingTable(map<Subnet, vector<int> >& grid);
+  map<Subnet, vector<int> >& GetOSPFRoutingTable (void);
   bool update();
   
   bool getUpdateState(){
@@ -127,7 +127,7 @@ public:
   void removeFromNeighbors(int neighbor);
 
   void addToLinkStateDatabase(int node, int cost);
-  map<int, int>& getLinkStateDatabase();
+  map<int, vector<int> >& getLinkStateDatabase();
   void removeFromLinkStateDatabase(int node);
 
   void checkNeighbors();
@@ -151,20 +151,22 @@ protected:
   void DoDispose (void);
 
 private:
+  vector<int> addNode(int tmp, vector< vector<int> > data);
+
   static void test();
 
   void sendMessage(Ipv4Address ip, Ptr<Packet> packet);
   void send2Peer(Ptr<Packet> packet);
   bool m_update_state;
 
-  map<Subnet, int> m_OSPFRoutingTable;
+  map<Subnet, vector<int> > m_OSPFRoutingTable;
 
   map<int, Time> m_LastNeighbors;
   map<int, Time> m_CurNeighbors;
 
   map<int, vector<uint16_t> > m_LSAs;
 
-  map<int, int> m_LinkStateDatabase;
+  map<int, vector<int> > m_LinkStateDatabase;
 
   int m_id;
   /// Set to true if packets are randomly routed among ECMP; set to false for using only one route consistently
@@ -176,7 +178,7 @@ private:
 
   //Ptr<Ipv4Route> LookupOSPF (Ipv4Address dest, Ptr<NetDevice> oif = 0);
 
-  Ptr<Ipv4Route> LookupOSPFRoutingTable (Ipv4Address dest);
+  Ptr<Ipv4Route> LookupOSPFRoutingTable (Ipv4Address source, Ipv4Address dest);
 
   Ptr<Ipv4> m_ipv4;
 

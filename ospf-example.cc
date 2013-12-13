@@ -25,7 +25,7 @@ NS_LOG_COMPONENT_DEFINE ("OspfExample");
 int action_time = 0;
 
 int downNode1 = 0;
-int downInterface1 = 3;
+int downInterface1 = 2;
 
 void downAction(){
     cout << "action down" << endl;
@@ -102,8 +102,8 @@ int main (int argc, char *argv[])
   //int UnavailableInterval = 3;
   //int HelloInterval = 2;
   //float CheckNeighborInterval = 0.1;
-  int CORE_NUM = 4;
-  int TOR_NUM = 10;
+  int CORE_NUM = 2;
+  int TOR_NUM = 4;
   int BORDER_NUM = 2;
   
   int SUBNET_MASK = 24;
@@ -122,7 +122,7 @@ int main (int argc, char *argv[])
   string dataRate = "1Gbps";//"1Gbps";
   string delay = "0ms";
   string dest_ip = "10.0.1.2";
-  string sendRate = "1Mb/s";//"100Mb/s";
+  string sendRate = "100Mb/s";//"100Mb/s";
   uint16_t port = 9;   // Discard port (RFC 863)
   int sendNode = nNodes+2;
   int destNode = nNodes+1;

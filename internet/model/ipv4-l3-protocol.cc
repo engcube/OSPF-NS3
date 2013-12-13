@@ -486,9 +486,9 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
               OSPFTag tag;
               bool found = packet->PeekPacketTag(tag);
               if (found){
-                //cout << "Dropping received tag packet -- interface is down" << endl;
+                cout << "Dropping received tag packet -- interface is down" << endl;
               }else{
-                //cout << "Dropping normal packet -- interface is down" << endl;
+                cout << "Dropping normal packet -- interface is down" << endl;
                 ConfLoader::Instance()->incrementLossPacketCounter();
                 ConfLoader::Instance()->setCurrentTime(Simulator::Now());
               }
@@ -532,7 +532,7 @@ NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to proces
   //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
   //uint32_t num = x->GetInteger(5,400);
   //cout << "Random " << num << endl;
-  uint32_t num = 100;
+  uint32_t num = 100;//100;
   Simulator::Schedule(MilliSeconds (num), &Ipv4L3Protocol::DelayReceive, this, packet, ipHeader, device, interface);
 
   /*if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
@@ -559,7 +559,7 @@ void Ipv4L3Protocol::DelayReceive(Ptr<Packet> packet, Ipv4Header ipHeader, Ptr<N
       m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
     }
 
-    cout << Simulator::Now() << " Delay Receive" << endl;
+   // cout << Simulator::Now() << " Delay Receive" << endl;
 }
 
 Ptr<Icmpv4L4Protocol> 
@@ -840,6 +840,9 @@ Ipv4L3Protocol::SendRealOut (Ptr<Ipv4Route> route,
       else
         {
           NS_LOG_LOGIC ("Dropping -- outgoing interface is down: " << ipHeader.GetDestination ());
+          cout << "Dropping -- outgoing interface is Down" << endl;
+          ConfLoader::Instance()->incrementLossPacketCounter();
+          ConfLoader::Instance()->setCurrentTime(Simulator::Now());
           Ipv4Header ipHeader;
           packet->RemoveHeader (ipHeader);
           m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);

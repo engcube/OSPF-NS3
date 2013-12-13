@@ -9,16 +9,16 @@
 using namespace std;
 
 int CORE_NUM = 4;
-int TOR_NUM = 512;
+int TOR_NUM = 4;
 int BORDER_NUM = 2;
 
 int total = CORE_NUM+TOR_NUM+BORDER_NUM+TOR_NUM;
 
-int m_id = 10;
+int m_id = 6;
 
-map<int, int> m_OSPFRoutingTable;
+map<int, vector<int> > m_OSPFRoutingTable;
 
-map<int, int> m_LinkStateDatabase;
+map<int, vector<int> > m_LinkStateDatabase;
 map<int, vector<int> > m_LSAs;
 
 
@@ -37,15 +37,32 @@ int calcSourceInterfaceByNode(int id, int node){
     }
 }
 
+vector<int> addNode(int tmp, vector< vector<int> > data){
+    std::vector<int> result;
+
+    if(find(m_LSAs[m_id].begin(), m_LSAs[m_id].end(), tmp)==m_LSAs[m_id].end()){
+        for(int l = 0; l < data[tmp].size(); l++){
+            int tt = data[tmp][l];
+            vector<int> r = addNode(tt, data);
+            for(int i=0; i<r.size(); i++){
+                result.push_back(r[i]);
+            }
+        }
+    }else{
+        result.push_back(tmp);
+    }
+    return result;
+}
+
 void Dijkstra(){
     int source = m_id;
     int dist[total];
     bool visited[total];
-    int previous[total];
+    vector< vector<int> > previous(total);
     for(int i=0; i<total; i++){
         dist[i] = 1000000;
         visited[i] = false;
-        previous[i] = source;
+        //previous[i].push_back(source);
     }
     dist[source] = 0;
     vector<int> Q;
@@ -67,24 +84,37 @@ void Dijkstra(){
         int alt = dist[u]+1;
         for(vector<int>::iterator it = neighbors.begin(); it!=neighbors.end(); ++it){
             int v = *it;
-            if(alt<dist[v]&&!visited[v]){
-                dist[v] = alt;
-                previous[v] = u;
-                Q.push_back(v);
+            if(!visited[v]){
+                //previous[v].clear();
+                if(alt<dist[v]){
+                    dist[v] = alt;
+                    previous[v].push_back(u);
+                    Q.push_back(v);
+                }else if(alt==dist[v]){
+                    previous[v].push_back(u);
+                    if(find(Q.begin(), Q.end(), v)==Q.end()){
+                      Q.push_back(v);
+                    }
+                }
             }
         }  
     }
 
     m_LinkStateDatabase.clear();
     for(int i=0;i<total;i++){
-        if(previous[i] == source){
-            m_LinkStateDatabase[i] = previous[i];
-            continue;
+        std::vector<int> v;
+        for(int j = 0; j < previous[i].size(); ++j){
+            if(previous[i][j] == source){
+                v.push_back(previous[i][j]);
+                continue;
+            }
+            int tmp = previous[i][j];
+            vector<int> result = addNode(tmp,previous);
+            for(int l =0 ; l<result.size();++l){
+                v.push_back(result[l]);
+            }
         }
-        while(find(m_LSAs[m_id].begin(), m_LSAs[m_id].end(), previous[i])==m_LSAs[m_id].end()){
-            previous[i] = previous[previous[i]];
-        }
-        m_LinkStateDatabase[i] = previous[i];
+        m_LinkStateDatabase[i] = v;
     }
 
     m_OSPFRoutingTable.clear();
@@ -92,13 +122,20 @@ void Dijkstra(){
     int tor = TOR_NUM;
     for(int i=0; i<tor; i++){
         int node = i+CORE_NUM+TOR_NUM+BORDER_NUM;
-        int previous = m_LinkStateDatabase[node];
-        if(previous == source){
-            previous = node;
+        vector<int> previous = m_LinkStateDatabase[node];
+
+        std::vector<int> v;
+        for(int j=0; j<previous.size(); j++){ 
+            if(previous[j] == source){
+                previous[j] = node;
+            }
+            //cout << previous[i] << endl;
+            v.push_back(calcSourceInterfaceByNode(source, previous[j]));
         }
-        m_OSPFRoutingTable[node] = calcSourceInterfaceByNode(source, previous);
+        m_OSPFRoutingTable[node] = v;
     }
 }
+
 
 void initLSAs(){
     for(int i=0; i<total; i++){
@@ -141,8 +178,11 @@ void initLSAs(){
 string toString(){
     stringstream result;
     result << m_id << "\tRoutingTable:" << endl;
-    for(map<int, int>::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
-        result << it->first << "\t" << it->second << "\n";
+    for(map<int, vector<int> >::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
+        std::vector<int> v = it->second;
+        for(std::vector<int>::iterator it2 = v.begin(); it2!=v.end(); ++it2){
+            result << it->first << "\t" << *it2 << "\n";
+        }
     }
     return result.str();
 }
@@ -151,12 +191,15 @@ int main(){
     clock_t start,stop;
 	//time_t start,stop;
 	initLSAs();
+    cout << "LSA number :" << m_LSAs.size() << endl;
     //start = time(NULL);
 	start = clock();
     Dijkstra();
+    cout << toString() << endl;
+
     stop = clock();
     //stop = time(NULL);
-    cout << stop-start << endl;
+    cout << "Ticks:" <<stop-start << endl;
     cout << CLOCKS_PER_SEC << endl;
     cout << (stop-start)*1.0/CLOCKS_PER_SEC << endl;
 	//cout << toString() << endl;

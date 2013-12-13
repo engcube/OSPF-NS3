@@ -55,7 +55,7 @@ Ipv4OSPFRoutingHelper::Create (Ptr<Node> node) const
   routing->setID(id);
   //router->setID(id);
   //router->SetRoutingProtocol (routing);
-  map<Subnet, int> mOSPFRoutingTable;
+  map<Subnet, std::vector<int> > mOSPFRoutingTable;
   //Subnet subnet(0x0a000000, 24);
   //mOSPFRoutingTable.insert(pair<Subnet, int>(subnet, id));
   //mOSPFRoutingTable[subnet] = id;

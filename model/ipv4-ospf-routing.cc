@@ -77,11 +77,11 @@ Ipv4OSPFRouting::~Ipv4OSPFRouting ()
   NS_LOG_FUNCTION (this);
 }
 
-void Ipv4OSPFRouting::SetOSPFRoutingTable(map<Subnet, int>& grid){
+void Ipv4OSPFRouting::SetOSPFRoutingTable(map<Subnet, vector<int> >& grid){
     this->m_OSPFRoutingTable = grid;
 }
 
-map<Subnet, int>& Ipv4OSPFRouting::GetOSPFRoutingTable (void){
+map<Subnet, vector<int> >& Ipv4OSPFRouting::GetOSPFRoutingTable (void){
     return this->m_OSPFRoutingTable;
 }
 
@@ -127,10 +127,10 @@ void Ipv4OSPFRouting::removeFromNeighbors(int neighbor){
 }
 
 void Ipv4OSPFRouting::addToLinkStateDatabase(int node, int cost){
-    m_LinkStateDatabase[node] = cost;
+    m_LinkStateDatabase[node].push_back(cost);
 }
 
-map<int, int>& Ipv4OSPFRouting::getLinkStateDatabase(){
+map<int, vector<int> >& Ipv4OSPFRouting::getLinkStateDatabase(){
     return m_LinkStateDatabase;
 }
   
@@ -142,11 +142,15 @@ void Ipv4OSPFRouting::removeFromLinkStateDatabase(int node){
 string Ipv4OSPFRouting::toString(){
     stringstream result;
     result << m_id << "\tRoutingTable:" << endl;
-    for(map<Subnet, int>::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
-        result << it->first.toString() << "\t" << it->second << "\n";
+    for(map<Subnet, vector<int> >::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
+        std::vector<int> v = it->second;
+        for(std::vector<int>::iterator it2 = v.begin(); it2!=v.end(); ++it2){
+            result << it->first.toString() << "\t" << *it2 << "\n";
+        }
     }
     return result.str();
 }
+
 
 void Ipv4OSPFRouting::sendHelloMessage(){
     Ptr<Packet> packet = Create<Packet>(1);
@@ -184,16 +188,33 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     //cout << toString() << endl;
 }
 
+vector<int> Ipv4OSPFRouting::addNode(int tmp, vector< vector<int> > data){
+    std::vector<int> result;
+
+    if(find(m_LSAs[m_id].begin(), m_LSAs[m_id].end(), tmp)==m_LSAs[m_id].end()){
+        for(int l = 0; l < (int)data[tmp].size(); l++){
+            int tt = data[tmp][l];
+            vector<int> r = addNode(tt, data);
+            for(int i=0; i<(int)r.size(); i++){
+                result.push_back(r[i]);
+            }
+        }
+    }else{
+        result.push_back(tmp);
+    }
+    return result;
+}
+
 void Ipv4OSPFRouting::Dijkstra(){
     int source = m_id;
     int total = ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum();
     int dist[total];
     bool visited[total];
-    int previous[total];
+    vector< vector<int> > previous(total);
     for(int i=0; i<total; i++){
         dist[i] = 1000000;
         visited[i] = false;
-        previous[i] = source;
+        //previous[i] = source;
     }
     dist[source] = 0;
     vector<int> Q;
@@ -215,26 +236,38 @@ void Ipv4OSPFRouting::Dijkstra(){
         int alt = dist[u]+1;
         for(vector<uint16_t>::iterator it = neighbors.begin(); it!=neighbors.end(); ++it){
             int v = (int)*it;
-            if(alt<dist[v]&&!visited[v]){
-                dist[v] = alt;
-                previous[v] = u;
-                Q.push_back(v);
+            if(!visited[v]){
+                //previous[v].clear();
+                if(alt<dist[v]){
+                    dist[v] = alt;
+                    previous[v].push_back(u);
+                    Q.push_back(v);
+                }else if(alt==dist[v]){
+                    previous[v].push_back(u);
+                    if(find(Q.begin(), Q.end(), v)==Q.end()){
+                      Q.push_back(v);
+                    }
+                }
             }
         }  
     }
-
+    
     m_LinkStateDatabase.clear();
     for(int i=0;i<total;i++){
-        if(previous[i] == source){
-            m_LinkStateDatabase[i] = previous[i];
-            continue;
+        std::vector<int> v;
+        for(int j = 0; j < (int)previous[i].size(); ++j){
+            if(previous[i][j] == source){
+                v.push_back(previous[i][j]);
+                continue;
+            }
+            int tmp = previous[i][j];
+            vector<int> result = addNode(tmp,previous);
+            for(int l =0 ; l<(int)result.size();++l){
+                v.push_back(result[l]);
+            }
         }
-        while(find(m_LSAs[m_id].begin(), m_LSAs[m_id].end(), previous[i])==m_LSAs[m_id].end()){
-            previous[i] = previous[previous[i]];
-        }
-        m_LinkStateDatabase[i] = previous[i];
+        m_LinkStateDatabase[i] = v;
     }
-
 
     //cout << "Link State of "<<m_id << endl;
     m_OSPFRoutingTable.clear();
@@ -245,21 +278,26 @@ void Ipv4OSPFRouting::Dijkstra(){
     }*/
 
     int tor = ConfLoader::Instance()->getToRNum();
+
     for(int i=0; i<tor; i++){
         int node = i+ConfLoader::Instance()->getTotalNum();
-        int previous = m_LinkStateDatabase[node];
-        if(previous == source){
-            previous = node;
-        }
-        m_OSPFRoutingTable[ConfLoader::Instance()->getSubnetByNode(node)]
-          = ConfLoader::Instance()->calcSourceInterfaceByNode(source, previous);
-          // = ConfLoader::Instance()->calcSourceInterfaceByNode(source, node);
-    }
+        vector<int> previous = m_LinkStateDatabase[node];
 
+        std::vector<int> v;
+        for(int j=0; j<(int)previous.size(); j++){ 
+            if(previous[j] == source){
+                previous[j] = node;
+            }
+            //cout << previous[i] << endl;
+            v.push_back(ConfLoader::Instance()->calcSourceInterfaceByNode(source, previous[j]));
+        }
+        m_OSPFRoutingTable[ConfLoader::Instance()->getSubnetByNode(node)] = v;
+    }
     /*cout << "OSPFRoutingTable of "<<m_id << endl;
     for(map<Subnet, int>::iterator it=m_OSPFRoutingTable.begin(); it!=m_OSPFRoutingTable.end();++it){
         cout << it->first.toString() << " " <<it->second << endl;
     }*/
+    cout << Simulator::Now() << ":" << toString() << endl;
 }
 
 void Ipv4OSPFRouting::toString(vector<uint16_t>& v){
@@ -395,13 +433,18 @@ void Ipv4OSPFRouting::sendMessage(Ipv4Address ip, Ptr<Packet> packet){
 }
 
 
-Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
+Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4Address dest)
 {
   NS_LOG_LOGIC ("Looking for route for destination " << dest);
   int out_interface = -1;
-  for(map<Subnet, int>::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
+  for(map<Subnet, vector<int> >::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
       if(it->first.contains(dest)){
-          out_interface = it->second;
+          //out_interface = it->second;
+          int size = it->second.size();
+          //ECMP hash
+          int choice = (int)(source.Get()+dest.Get()) % size;
+          out_interface = it->second[choice];
+          break;
       }
   }
   if(out_interface == -1){
@@ -411,7 +454,7 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address dest)
   int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
-  //cout << Simulator::Now() << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
+  cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
   rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
   rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
@@ -426,9 +469,9 @@ Ipv4OSPFRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDe
 {
   NS_LOG_FUNCTION (this << p << &header << oif << &sockerr);
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination());
-  //cout << Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
+  cout << Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   NS_LOG_LOGIC ("Unicast destination- looking up");
-  Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetDestination ());
+  Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetSource(), header.GetDestination ());
   if (rtentry)
     {
       sockerr = Socket::ERROR_NOTERROR;
@@ -454,7 +497,7 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
   NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() );
-  //cout << Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
+  cout << Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   for (uint32_t j = 0; j < m_ipv4->GetNInterfaces (); j++)
     {
       for (uint32_t i = 0; i < m_ipv4->GetNAddresses (j); i++)
@@ -492,7 +535,7 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
     }
   // Next, try to find a route
   NS_LOG_LOGIC ("Unicast destination- looking up global route");
-  Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetDestination ());
+  Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetSource(), header.GetDestination ());
   if (rtentry != 0)
     {
       NS_LOG_LOGIC ("Found unicast destination- calling unicast callback");
