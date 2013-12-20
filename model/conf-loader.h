@@ -123,12 +123,32 @@ public:
   int getLSANum(){return m_lsaNum;};
   
   vector<uint16_t>& getLSA(int index){ return m_lsas[index];};
+
+  void incrementSuccessPacket(){m_SuccessPacket++;};
+  int getSuccessPacket(){return m_SuccessPacket;};
+  void incrementSendPacket(){m_SendPacket++;};
+  int getSendPacket(){return m_SendPacket;};
+
+  int getNodeByInterface(int id, int interface){
+      if(id < m_CoreNum){
+          return m_CoreNum+interface-1;
+      }else if(id<m_CoreNum+m_ToRNum+m_BorderNum){
+          if(interface==m_CoreNum+1) return id+m_ToRNum+m_BorderNum;
+          else return interface-1;
+      }else{
+        return id - (m_ToRNum+m_BorderNum);
+      }
+      return -1;
+  };
+  
 private:
 
 	ConfLoader(){
     m_lossPacketCounter = 0;
     isDown = false;
     m_lsaNum = 0;
+    m_SuccessPacket = 0;
+    m_SendPacket = 0;
   };
 	ConfLoader(ConfLoader const&){};
 	//ConfLoader& operator=(ConfLoader const&){};
@@ -155,6 +175,9 @@ private:
   int m_lossPacketCounter;
   Time m_startTime;
   Time m_stopTime;
+
+  int m_SuccessPacket;
+  int m_SendPacket;
 
   NodeContainer m_nodes;
 

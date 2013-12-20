@@ -162,6 +162,13 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
           Ptr<Node> node = m_ipv4->GetObject<Node>();
           cout << Simulator::Now() << " " << node->GetId ()<<" Packet received!" << endl;
           node->GetObject<Ipv4OSPFRouting>()->handleMessage(p);
+
+              OSPFTag tag;
+              bool found = p->PeekPacketTag(tag);
+              if (found){
+              }else{
+                  ConfLoader::Instance()->incrementSuccessPacket();
+              }
           //lcb (p, header, iif);
           return true;
         }

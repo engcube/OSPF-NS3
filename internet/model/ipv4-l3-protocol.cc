@@ -606,7 +606,6 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << source << destination << uint32_t (protocol) << route);
   //cout << this << packet << source << destination << uint32_t (protocol) << route << endl;
-
   Ipv4Header ipHeader;
   bool mayFragment = true;
   uint8_t ttl = m_defaultTtl;
@@ -682,7 +681,8 @@ Ipv4L3Protocol::Send (Ptr<Packet> packet,
   // 3) packet is not broadcast, and is passed in with a route entry
   //    with a valid Ipv4Address as the gateway
   if (route && route->GetGateway () != Ipv4Address ())
-    {
+    {  
+
       NS_LOG_LOGIC ("Ipv4L3Protocol::Send case 3:  passed in with route");
       ipHeader = BuildHeader (source, destination, protocol, packet->GetSize (), ttl, tos, mayFragment);
       int32_t interface = GetInterfaceForDevice (route->GetOutputDevice ());

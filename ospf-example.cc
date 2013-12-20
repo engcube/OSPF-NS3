@@ -11,7 +11,8 @@
 
 #include "ns3/ipv4-ospf-routing-helper.h"
 #include "ns3/conf-loader.h"
-
+#include "ns3/ipv4-flow-classifier.h"
+#include "ns3/queue.h"
 
 #include <list>
 #include <string>
@@ -76,6 +77,46 @@ void update(){
   action_time ++;
 }
 
+void statistics(){
+    PointerValue ptr;
+    Ptr<NetDevice> nd = ConfLoader::Instance()->getNodeContainer().Get(10)-> GetDevice(0);
+    nd->GetAttribute("TxQueue", ptr);
+    Ptr<Queue> txQueue = ptr.Get<Queue> ();
+    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
+    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+
+    nd = ConfLoader::Instance()->getNodeContainer().Get(3)-> GetDevice(0);
+    nd->GetAttribute("TxQueue", ptr);
+    txQueue = ptr.Get<Queue> ();
+    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
+    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+
+    nd = ConfLoader::Instance()->getNodeContainer().Get(3)-> GetDevice(1);
+    nd->GetAttribute("TxQueue", ptr);
+    txQueue = ptr.Get<Queue> ();
+    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
+    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+
+    nd = ConfLoader::Instance()->getNodeContainer().Get(3)-> GetDevice(2);
+    nd->GetAttribute("TxQueue", ptr);
+    txQueue = ptr.Get<Queue> ();
+    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
+    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+
+/*
+    nd = ConfLoader::Instance()->getNodeContainer().Get(4)-> GetDevice(2);
+    nd->GetAttribute("TxQueue", ptr);
+    txQueue = ptr.Get<Queue> ();
+    cout << "4.3 totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
+    cout << "4.3 totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;*/
+    /*
+    PointerValue ptr2;
+    ConfLoader::Instance()->getNodeContainer().Get(0)-> GetDevice(3)->GetAttribute ("TxQueue", ptr2);
+    Ptr<Queue> txQueue2 = ptr2.Get<Queue> ();
+    cout << "0.3 totalDropped Packets: "<< txQueue2->GetTotalDroppedPackets()<< endl;
+    cout << "0.3 totalReveived Packets: "<< txQueue2->GetTotalReceivedPackets()<< endl;*/
+}
+
 void Hello(){
   cout << Simulator::Now() << "----------------hello---------"<<endl;
     for(int i=0; i<ConfLoader::Instance()->getTotalNum()+ConfLoader::Instance()->getToRNum(); i++){
@@ -95,7 +136,7 @@ int main (int argc, char *argv[])
   //LogComponentEnable ("OnOffApplication", LOG_LEVEL_INFO);
   //LogComponentEnable ("OSPFRoutingHelper", LOG_LEVEL_ALL);
   //LogComponentEnable ("Ipv4OSPFRouting", LOG_LEVEL_ALL);
-  //LogComponentEnable ("Ipv4L3Protocol", LOG_LEVEL_ALL);
+  //LogComponentEnable ("Queue", LOG_LEVEL_ALL);
   //LogComponentEnableAll(LOG_LEVEL_ALL);
 
 
@@ -115,15 +156,15 @@ int main (int argc, char *argv[])
   float app_start_time = 1.0;
   float app_stop_time = 10.0;
   uint32_t stopTime = 11;
-  float downTime = 2;
-  float upTime  = 8;
+  //float downTime = 2;
+  //float upTime  = 8;
 
-  float findDelay = 0.1; //s
+  //float findDelay = 0.1; //s
   string dataRate = "1Gbps";//"1Gbps";
   string delay = "0ms";
   string dest_ip = "10.0.1.2";
-  string sendRate = "100Mb/s";//"100Mb/s";
-  uint16_t port = 9;   // Discard port (RFC 863)
+  string sendRate = "10Mb/s";//"100Mb/s";
+  uint16_t port = 10;   // Discard port (RFC 863)
   int sendNode = nNodes+2;
   int destNode = nNodes+1;
   //int simulateTime = (int)app_stop_time;
@@ -138,7 +179,7 @@ int main (int argc, char *argv[])
   ConfLoader::Instance()->setAddressStart(ADDRESS_START);
 
   CommandLine cmd;
-  bool enableFlowMonitor = false;
+  bool enableFlowMonitor = true;
   cmd.AddValue ("EnableMonitor", "Enable Flow Monitor", enableFlowMonitor);
   //cmd.AddValue ("nNodes", "Number of Router nodes", nNodes);
   cmd.Parse (argc, argv);
@@ -177,12 +218,27 @@ int main (int argc, char *argv[])
   PointToPointHelper pointToPoint;
   pointToPoint.SetDeviceAttribute ("DataRate", StringValue (dataRate));
   pointToPoint.SetChannelAttribute ("Delay", StringValue (delay));
+  pointToPoint.SetDeviceAttribute ("InterframeGap", StringValue("1ms"));
 
   list<NetDeviceContainer> netDeviceContainers;
   for(list<NodeContainer>::iterator it= nodeContainers.begin(); it!=nodeContainers.end(); ++it){
       NetDeviceContainer didj = pointToPoint.Install (*it);
       netDeviceContainers.push_back(didj);
   }
+
+    /*PointerValue ptr;
+    netDeviceContainers.front().Get(0)->GetAttribute ("TxQueue", ptr);
+    Ptr<Queue> txQueue = ptr.Get<Queue> ();
+
+    UintegerValue limit;
+    txQueue->GetAttribute ("MaxPackets", limit);
+    cout << "MaxPackets: " << limit.Get () << " packets" << endl;
+
+    txQueue->GetAttribute ("MaxBytes", limit);
+    cout << "MaxBytes: " << limit.Get () << " bytes" << endl;*/
+
+    //Config::Set ("/NodeList/*/DeviceList/*/TxQueue/MaxBytes", UintegerValue (0));
+
 
   list<NetDeviceContainer> netDeviceContainers_2;
   for(list<NodeContainer>::iterator it= nodeContainers_2.begin(); it!=nodeContainers_2.end(); ++it){
@@ -281,13 +337,16 @@ int main (int argc, char *argv[])
       //Ipv4InterfaceContainer interfaces = ipv4AddrHelper.Assign (devices);
       //Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Create Applications.");
+  
+  Config::Set ("/NodeList/*/DeviceList/*/TxQueue/MaxPackets", UintegerValue (10000));
+  //FlowMonitorHelper flowmon;
+  //Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
   //pointToPoint.EnablePcapAll ("dce-quagga-ospfd");
 
   //cout << destNode << endl;
   OnOffHelper onoff ("ns3::UdpSocketFactory", 
                      Address (InetSocketAddress (c.Get(destNode)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal(), port)));
-                     //Address (InetSocketAddress ("255.255.255.255", port)));
 
   onoff.SetConstantRate (DataRate (sendRate), packetSize);
   ApplicationContainer apps = onoff.Install (c.Get (sendNode));
@@ -295,6 +354,17 @@ int main (int argc, char *argv[])
   apps.Start (Seconds (app_start_time));
   apps.Stop (Seconds (app_stop_time));
   
+  int destNode2 = nNodes + 2;
+  int sendNode2 = nNodes + 0;
+  OnOffHelper onoff2 ("ns3::UdpSocketFactory", 
+                     Address (InetSocketAddress (c.Get(destNode2)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal(), port)));
+
+  onoff2.SetConstantRate (DataRate (sendRate), packetSize);
+  apps = onoff.Install (c.Get (sendNode2));
+
+  apps.Start (Seconds (app_start_time));
+  apps.Stop (Seconds (app_stop_time));
+
   // Create a packet sink to receive these packets
   PacketSinkHelper sink ("ns3::UdpSocketFactory",
                          Address (InetSocketAddress (Ipv4Address::GetAny (), port)));
@@ -324,12 +394,14 @@ int main (int argc, char *argv[])
   Ptr<Ipv4> ipv4 = n1->GetObject<Ipv4> ();
   // The first ifIndex is 0 for loopback, then the first p2p is numbered 1,
   // then the next p2p is numbered 2
-  uint32_t ipv4ifIndex = downInterface1;
+  //uint32_t ipv4ifIndex = downInterface1;
   Simulator::Schedule (Seconds (0), &initLSAs);
-  Simulator::Schedule (Seconds (downTime),&Ipv4::SetDown, ipv4, ipv4ifIndex);
-  Simulator::Schedule (Seconds (downTime+ findDelay ),&downAction);
-  Simulator::Schedule (Seconds (upTime),&Ipv4::SetUp, ipv4, ipv4ifIndex);
-  Simulator::Schedule (Seconds (upTime+ findDelay ),&upAction);
+  //Simulator::Schedule (Seconds (downTime),&Ipv4::SetDown, ipv4, ipv4ifIndex);
+  //Simulator::Schedule (Seconds (downTime+ findDelay ),&downAction);
+  //Simulator::Schedule (Seconds (upTime),&Ipv4::SetUp, ipv4, ipv4ifIndex);
+  //Simulator::Schedule (Seconds (upTime+ findDelay ),&upAction);
+
+  Simulator::Schedule (Seconds (stopTime), &statistics);
 
   /*for(int i=1; i<simulateTime/simulateInterval;i++){
     Time onInterval = Seconds (i*simulateInterval);
@@ -354,8 +426,30 @@ int main (int argc, char *argv[])
     }
   Simulator::Run ();
   cout << "Done." << endl;
+/*
+  monitor->CheckForLostPackets ();
+  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
+  std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
+
+  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator iter = stats.begin (); iter != stats.end (); ++iter)
+    {
+    Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (iter->first);
+
+      if (t.destinationAddress == Address (InetSocketAddress (c.Get(destNode)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal(), port)))
+        {
+        NS_LOG_UNCOND("Flow ID: " << iter->first << " Src Addr " << t.sourceAddress << " Dst Addr " << t.destinationAddress);
+        NS_LOG_UNCOND("Tx Packets = " << iter->second.txPackets);
+        NS_LOG_UNCOND("Rx Packets = " << iter->second.rxPackets);
+        NS_LOG_UNCOND("Throughput: " << iter->second.rxBytes * 8.0 / (iter->second.timeLastRxPacket.GetSeconds()-iter->second.timeFirstTxPacket.GetSeconds()) / 1024  << " Kbps");
+        }
+    }
+  monitor->SerializeToXmlFile("OspfExample.flowmon", true, true);*/
+
   Simulator::Destroy ();
   cout << "Lost packets: " << ConfLoader::Instance()->getLossPacketCounter() << endl;
   cout << "Duration: " <<  ConfLoader::Instance()->getStartTime() << " to " << ConfLoader::Instance()->getStopTime() << endl;
+
+  cout << "Send: " << ConfLoader::Instance()->getSendPacket() << endl;
+  cout << "Receive: " << ConfLoader::Instance()->getSuccessPacket() << endl;
   return 0;
 }

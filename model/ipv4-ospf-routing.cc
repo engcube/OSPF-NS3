@@ -29,6 +29,8 @@
 #include "ns3/boolean.h"
 #include "ipv4-ospf-routing.h"
 #include "ns3/ospf-tag.h"
+#include "ns3/core-module.h"
+#include "ns3/queue.h"
 
 #include "ns3/simulator.h"
 #include <sstream>
@@ -437,10 +439,14 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
 {
   NS_LOG_LOGIC ("Looking for route for destination " << dest);
   int out_interface = -1;
+
   for(map<Subnet, vector<int> >::iterator it = m_OSPFRoutingTable.begin(); it != m_OSPFRoutingTable.end(); ++it){
       if(it->first.contains(dest)){
           //out_interface = it->second;
           int size = it->second.size();
+          if(size==0){
+              break;
+          }
           //ECMP hash
           int choice = (int)(source.Get()+dest.Get()) % size;
           out_interface = it->second[choice];
@@ -451,10 +457,45 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
       cout << "No route found!" << endl;
       return 0;
   }
+
   int destNode = ConfLoader::Instance()->calcDestNodeBySource(m_id, out_interface);
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
   cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
+    
+  /*
+  PointerValue ptr;
+  ConfLoader::Instance()->getNodeContainer().Get(m_id)-> GetDevice(out_interface)->GetAttribute("TxQueue", ptr);
+  cout << "Current Packets: "<< ptr.Get<Queue> ()->GetNPackets()<< endl;
+  int current = ptr.Get<Queue> ()->GetNPackets() ;
+
+  UintegerValue limit;
+  ptr.Get<Queue> ()->GetAttribute ("MaxPackets", limit);
+  int total = limit.Get ();
+
+  float percent = current*1.0/total;
+  cout << "Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
+
+  if(percent>0.75){
+
+  }*/
+  PointerValue ptr;
+  m_ipv4->GetNetDevice (out_interface)->GetAttribute("TxQueue", ptr);
+  int current = ptr.Get<Queue> ()->GetNPackets() ;
+
+  UintegerValue limit;
+  ptr.Get<Queue> ()->GetAttribute ("MaxPackets", limit);
+  int total = limit.Get ();
+
+  float percent = current*1.0/total;
+  cout << "Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
+
+  if(percent>0.75){
+      cout << "Remove " << destNode << " from Neigbors; Update neighbors" << endl;
+      CheckTxQueue();
+      updateNeighbors();
+  }
+
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
   rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
   rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
@@ -463,6 +504,26 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
   return rtentry;
 }
 
+void Ipv4OSPFRouting::CheckTxQueue(){
+    m_CurNeighbors.clear();
+    int n = m_ipv4->GetNInterfaces();
+    for(int i=1; i< n; i++){
+      PointerValue ptr;
+      m_ipv4->GetNetDevice (i)->GetAttribute("TxQueue", ptr);
+      int current = ptr.Get<Queue> ()->GetNPackets() ;
+
+      UintegerValue limit;
+      ptr.Get<Queue> ()->GetAttribute ("MaxPackets", limit);
+      int total = limit.Get ();
+
+      float percent = current*1.0/total;
+      cout << i << "/" << n << " ;Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
+
+      if(percent<=0.75){
+          m_CurNeighbors[ConfLoader::Instance()->getNodeByInterface(m_id,i)] = Simulator::Now();
+      }
+    }
+}
 
 Ptr<Ipv4Route>
 Ipv4OSPFRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr)
@@ -471,6 +532,7 @@ Ipv4OSPFRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDe
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination());
   cout << Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   NS_LOG_LOGIC ("Unicast destination- looking up");
+  ConfLoader::Instance()->incrementSendPacket();
   Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetSource(), header.GetDestination ());
   if (rtentry)
     {

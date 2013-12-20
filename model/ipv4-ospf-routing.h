@@ -152,6 +152,7 @@ protected:
 
 private:
   vector<int> addNode(int tmp, vector< vector<int> > data);
+  void CheckTxQueue();
 
   static void test();
 
