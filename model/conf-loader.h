@@ -44,23 +44,17 @@ public:
   void setNodeContainer(NodeContainer& nc);
   NodeContainer& getNodeContainer();
 
-  void incrementLossPacketCounter(){ 
-    if(!isDown){
-        return;
+  void incrementLossPacketCounter(int id){ 
+    if(m_lossPacketCounter.find(id)==m_lossPacketCounter.end()){
+        m_lossPacketCounter[id] = 0;
     }
-    this->m_lossPacketCounter++;
+    m_lossPacketCounter[id]++;
   };
 
   void prepareLinkDown(){
-      if(isDown){
-          return;
-      }
-      isDown = true;
-      cout << "Lost packets: " << m_lossPacketCounter << endl;
-      cout << "Duration: " <<  m_startTime << " to " << m_stopTime << endl;
-      this->m_lossPacketCounter=0;
   }
-  int getLossPacketCounter(){ return this->m_lossPacketCounter;};
+
+  map<int,int>& getLossPacketCounter(){ return this->m_lossPacketCounter;};
 
   void setCurrentTime(Time time){
     if(!isDown){ return;}
@@ -115,6 +109,14 @@ public:
       return m_NodeSubnets[id];
   };
 
+  string PrintMap(map<int,int> m){
+      stringstream ss;
+      for(map<int, int>::iterator it = m.begin(); it!=m.end(); ++it){
+          ss << it->first << ":" << it->second << endl;
+      }
+      return ss.str();
+  };
+
   void addLSA(int index, vector<uint16_t>& lsa){ 
     m_lsas[index] = lsa;
     m_lsaNum ++;
@@ -124,11 +126,33 @@ public:
   
   vector<uint16_t>& getLSA(int index){ return m_lsas[index];};
 
-  void incrementSuccessPacket(){m_SuccessPacket++;};
-  int getSuccessPacket(){return m_SuccessPacket;};
-  void incrementSendPacket(){m_SendPacket++;};
-  int getSendPacket(){return m_SendPacket;};
+  void incrementSuccessPacket(int id){
+    if(m_SuccessPacket.find(id)==m_SuccessPacket.end()){
+        m_SuccessPacket[id] = 0;
+    }
+    m_SuccessPacket[id]++;
+  };
 
+  map<int,int>& getSuccessPacket(){return m_SuccessPacket;};
+
+  void incrementSendPacket(int id){
+    if(m_SendPacket.find(id)==m_SendPacket.end()){
+        m_SendPacket[id] = 0;
+    }
+    m_SendPacket[id]++;
+  };
+
+  map<int,int>& getSendPacket(){return m_SendPacket;};
+
+  void incrementRecvPacket(int id){
+    if(m_RecvPacket.find(id)==m_RecvPacket.end()){
+        m_RecvPacket[id] = 0;
+    }
+    m_RecvPacket[id]++;
+  };
+
+  map<int,int>& getRecvPacket(){return m_RecvPacket;};
+  
   int getNodeByInterface(int id, int interface){
       if(id < m_CoreNum){
           return m_CoreNum+interface-1;
@@ -141,14 +165,14 @@ public:
       return -1;
   };
   
+  uint32_t getPacketReceiveDelay(){return m_PacketReceiveDelay;};
+  void setPacketReceiveDelay(uint32_t delay){m_PacketReceiveDelay = delay;};
 private:
 
 	ConfLoader(){
-    m_lossPacketCounter = 0;
     isDown = false;
     m_lsaNum = 0;
-    m_SuccessPacket = 0;
-    m_SendPacket = 0;
+
   };
 	ConfLoader(ConfLoader const&){};
 	//ConfLoader& operator=(ConfLoader const&){};
@@ -170,14 +194,16 @@ private:
   int m_BorderNum;
   int m_SubnetMask;
   uint32_t m_AddressStart;
+  uint32_t m_PacketReceiveDelay;
 
   bool isDown;
-  int m_lossPacketCounter;
+  map<int,int > m_lossPacketCounter;
   Time m_startTime;
   Time m_stopTime;
 
-  int m_SuccessPacket;
-  int m_SendPacket;
+  map<int,int> m_SuccessPacket;
+  map<int,int> m_SendPacket;
+  map<int,int> m_RecvPacket;
 
   NodeContainer m_nodes;
 

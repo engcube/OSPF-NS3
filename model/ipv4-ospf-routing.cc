@@ -491,9 +491,9 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
   cout << "Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
 
   if(percent>0.75){
-      cout << "Remove " << destNode << " from Neigbors; Update neighbors" << endl;
-      CheckTxQueue();
-      updateNeighbors();
+      cout << "Remove " << destNode << " from Neigbors; Update neighbors of " << m_id << endl;
+      //CheckTxQueue();
+      //updateNeighbors();
   }
 
   Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
@@ -532,7 +532,7 @@ Ipv4OSPFRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDe
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination());
   cout << Simulator::Now() << " " << m_id <<" send a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   NS_LOG_LOGIC ("Unicast destination- looking up");
-  ConfLoader::Instance()->incrementSendPacket();
+  ConfLoader::Instance()->incrementSendPacket(m_id);
   Ptr<Ipv4Route> rtentry = LookupOSPFRoutingTable (header.GetSource(), header.GetDestination ());
   if (rtentry)
     {
@@ -558,6 +558,7 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
   // Check if input device supports IP
   NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
+
   NS_LOG_DEBUG( Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() );
   cout << Simulator::Now() << " " << m_id <<" receive a packet\t"<< p << "\t" << header.GetSource() << "\t"<<header.GetDestination() << endl;
   for (uint32_t j = 0; j < m_ipv4->GetNInterfaces (); j++)
@@ -601,6 +602,7 @@ Ipv4OSPFRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &header, Ptr
   if (rtentry != 0)
     {
       NS_LOG_LOGIC ("Found unicast destination- calling unicast callback");
+
       ucb (rtentry, p, header);
       return true;
     }

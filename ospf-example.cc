@@ -77,44 +77,29 @@ void update(){
   action_time ++;
 }
 
-void statistics(){
+void printTxInfo(int node, int index){
     PointerValue ptr;
-    Ptr<NetDevice> nd = ConfLoader::Instance()->getNodeContainer().Get(10)-> GetDevice(0);
-    nd->GetAttribute("TxQueue", ptr);
-    Ptr<Queue> txQueue = ptr.Get<Queue> ();
-    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
-    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
-
-    nd = ConfLoader::Instance()->getNodeContainer().Get(3)-> GetDevice(0);
-    nd->GetAttribute("TxQueue", ptr);
+    Ptr<Queue> txQueue;
+    ConfLoader::Instance()->getNodeContainer().Get(node)->GetObject<Ipv4OSPFRouting>()->getIpv4()->GetNetDevice (index)->GetAttribute("TxQueue", ptr);
     txQueue = ptr.Get<Queue> ();
-    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
-    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+    cout << node << ":" << index << " totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
+    cout << node << ":" << index << " totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+}
 
-    nd = ConfLoader::Instance()->getNodeContainer().Get(3)-> GetDevice(1);
-    nd->GetAttribute("TxQueue", ptr);
-    txQueue = ptr.Get<Queue> ();
-    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
-    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+void statistics(){
+    printTxInfo(10,1);
+    printTxInfo(4,1);
+    printTxInfo(4,2);
 
-    nd = ConfLoader::Instance()->getNodeContainer().Get(3)-> GetDevice(2);
-    nd->GetAttribute("TxQueue", ptr);
-    txQueue = ptr.Get<Queue> ();
-    cout << "totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
-    cout << "totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;
+    printTxInfo(8,1);
+    printTxInfo(2,1);
+    printTxInfo(2,2);
 
-/*
-    nd = ConfLoader::Instance()->getNodeContainer().Get(4)-> GetDevice(2);
-    nd->GetAttribute("TxQueue", ptr);
-    txQueue = ptr.Get<Queue> ();
-    cout << "4.3 totalDropped Packets: "<< txQueue->GetTotalDroppedPackets()<< endl;
-    cout << "4.3 totalReveived Packets: "<< txQueue->GetTotalReceivedPackets()<< endl;*/
-    /*
-    PointerValue ptr2;
-    ConfLoader::Instance()->getNodeContainer().Get(0)-> GetDevice(3)->GetAttribute ("TxQueue", ptr2);
-    Ptr<Queue> txQueue2 = ptr2.Get<Queue> ();
-    cout << "0.3 totalDropped Packets: "<< txQueue2->GetTotalDroppedPackets()<< endl;
-    cout << "0.3 totalReveived Packets: "<< txQueue2->GetTotalReceivedPackets()<< endl;*/
+    printTxInfo(0,2);
+    printTxInfo(1,2);
+    printTxInfo(3,3);
+    printTxInfo(3,1);
+    printTxInfo(3,2);
 }
 
 void Hello(){
@@ -155,15 +140,20 @@ int main (int argc, char *argv[])
   
   float app_start_time = 1.0;
   float app_stop_time = 10.0;
-  uint32_t stopTime = 11;
+  float listen_app_stop_time = 55.0;
+  uint32_t stopTime = 60;
+
   //float downTime = 2;
   //float upTime  = 8;
 
   //float findDelay = 0.1; //s
   string dataRate = "1Gbps";//"1Gbps";
-  string delay = "0ms";
+  string channelDelay = "0ms";
   string dest_ip = "10.0.1.2";
   string sendRate = "10Mb/s";//"100Mb/s";
+  string dequeGap = "0.5ms";
+  uint32_t packetReceiveDelay = 0;
+  int maxPackets = 10000;
   uint16_t port = 10;   // Discard port (RFC 863)
   int sendNode = nNodes+2;
   int destNode = nNodes+1;
@@ -177,7 +167,7 @@ int main (int argc, char *argv[])
   ConfLoader::Instance()->setBorderNum(BORDER_NUM);
   ConfLoader::Instance()->setSubnetMask(SUBNET_MASK);
   ConfLoader::Instance()->setAddressStart(ADDRESS_START);
-
+  ConfLoader::Instance()->setPacketReceiveDelay(packetReceiveDelay);
   CommandLine cmd;
   bool enableFlowMonitor = true;
   cmd.AddValue ("EnableMonitor", "Enable Flow Monitor", enableFlowMonitor);
@@ -217,8 +207,8 @@ int main (int argc, char *argv[])
 
   PointToPointHelper pointToPoint;
   pointToPoint.SetDeviceAttribute ("DataRate", StringValue (dataRate));
-  pointToPoint.SetChannelAttribute ("Delay", StringValue (delay));
-  pointToPoint.SetDeviceAttribute ("InterframeGap", StringValue("1ms"));
+  pointToPoint.SetChannelAttribute ("Delay", StringValue (channelDelay));
+  pointToPoint.SetDeviceAttribute ("InterframeGap", StringValue(dequeGap));
 
   list<NetDeviceContainer> netDeviceContainers;
   for(list<NodeContainer>::iterator it= nodeContainers.begin(); it!=nodeContainers.end(); ++it){
@@ -338,11 +328,16 @@ int main (int argc, char *argv[])
       //Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Create Applications.");
   
-  Config::Set ("/NodeList/*/DeviceList/*/TxQueue/MaxPackets", UintegerValue (10000));
+  Config::Set ("/NodeList/*/DeviceList/*/TxQueue/MaxPackets", UintegerValue (maxPackets));
   //FlowMonitorHelper flowmon;
   //Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
   //pointToPoint.EnablePcapAll ("dce-quagga-ospfd");
+  //Ptr<OutputStreamWrapper> stream = traceHelper.CreateFileStream ("ospf-example.tr");
+  NodeContainer cc;
+  cc.Add(c.Get(0));
+  pointToPoint.EnableAscii("TxRxPointToPoint", cc);
+  pointToPoint.EnableAscii("MacTxDrop", cc);
 
   //cout << destNode << endl;
   OnOffHelper onoff ("ns3::UdpSocketFactory", 
@@ -372,7 +367,7 @@ int main (int argc, char *argv[])
     apps = sink.Install (c.Get (i));
   }
   apps.Start (Seconds (app_start_time));
-  apps.Stop (Seconds (app_stop_time));
+  apps.Stop (Seconds (listen_app_stop_time));
 
   /*Ptr<OutputStreamWrapper> routintable = Create<OutputStreamWrapper>("routingtable",std::ios::out);
   for(int i=0;i<total;i++){
@@ -446,10 +441,10 @@ int main (int argc, char *argv[])
   monitor->SerializeToXmlFile("OspfExample.flowmon", true, true);*/
 
   Simulator::Destroy ();
-  cout << "Lost packets: " << ConfLoader::Instance()->getLossPacketCounter() << endl;
-  cout << "Duration: " <<  ConfLoader::Instance()->getStartTime() << " to " << ConfLoader::Instance()->getStopTime() << endl;
-
-  cout << "Send: " << ConfLoader::Instance()->getSendPacket() << endl;
-  cout << "Receive: " << ConfLoader::Instance()->getSuccessPacket() << endl;
+  cout << "Lost packets: " << endl << ConfLoader::Instance()->PrintMap(ConfLoader::Instance()->getLossPacketCounter()) << endl;
+  cout << "Send: " << endl << ConfLoader::Instance()->PrintMap(ConfLoader::Instance()->getSendPacket()) << endl;
+  cout << "Receive: " << endl << ConfLoader::Instance()->PrintMap(ConfLoader::Instance()->getRecvPacket()) << endl;
+  cout << "Success: " << endl << ConfLoader::Instance()->PrintMap(ConfLoader::Instance()->getSuccessPacket()) << endl;
+  //cout << "Duration: " <<  ConfLoader::Instance()->getStartTime() << " to " << ConfLoader::Instance()->getStopTime() << endl;
   return 0;
 }
