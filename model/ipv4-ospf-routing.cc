@@ -185,7 +185,7 @@ void Ipv4OSPFRouting::sendLSAMessage(int node, int index){
     m_socket->Connect (Address (InetSocketAddress ("255.255.255.255", 9)));
     m_socket->Send (packet);
     //cout << Simulator::Now() << " " << m_id << " send LSA of " << node << endl;
-    Simulator::Schedule (Seconds (0.01), &Ipv4OSPFRouting::Dijkstra, this);
+    Simulator::Schedule (Seconds (ConfLoader::Instance()->getCalculateCost()), &Ipv4OSPFRouting::Dijkstra, this);
     //Dijkstra();
     //cout << toString() << endl;
 }
@@ -462,23 +462,7 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
   int destInterface = ConfLoader::Instance()->calcDestInterfaceBySource(m_id, out_interface);
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
   cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
-    
-  /*
-  PointerValue ptr;
-  ConfLoader::Instance()->getNodeContainer().Get(m_id)-> GetDevice(out_interface)->GetAttribute("TxQueue", ptr);
-  cout << "Current Packets: "<< ptr.Get<Queue> ()->GetNPackets()<< endl;
-  int current = ptr.Get<Queue> ()->GetNPackets() ;
 
-  UintegerValue limit;
-  ptr.Get<Queue> ()->GetAttribute ("MaxPackets", limit);
-  int total = limit.Get ();
-
-  float percent = current*1.0/total;
-  cout << "Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
-
-  if(percent>0.75){
-
-  }*/
   PointerValue ptr;
   m_ipv4->GetNetDevice (out_interface)->GetAttribute("TxQueue", ptr);
   int current = ptr.Get<Queue> ()->GetNPackets() ;
@@ -490,7 +474,7 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
   float percent = current*1.0/total;
   cout << "Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
 
-  if(percent>0.75){
+  if(percent>ConfLoader::Instance()->getCongestionWaningLimit()){
       cout << "Remove " << destNode << " from Neigbors; Update neighbors of " << m_id << endl;
       //CheckTxQueue();
       //updateNeighbors();
@@ -519,7 +503,7 @@ void Ipv4OSPFRouting::CheckTxQueue(){
       float percent = current*1.0/total;
       cout << i << "/" << n << " ;Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
 
-      if(percent<=0.75){
+      if(percent<=ConfLoader::Instance()->getCongestionWaningLimit()){
           m_CurNeighbors[ConfLoader::Instance()->getNodeByInterface(m_id,i)] = Simulator::Now();
       }
     }

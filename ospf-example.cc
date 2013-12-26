@@ -161,6 +161,8 @@ int main (int argc, char *argv[])
   //int simulateInterval = 3;
   uint32_t packetSize = 512;
 
+  float CONGESTION_WARNING_LIMIT = 0.85;
+  float CALCULATE_COST = 0.05;
   //ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
@@ -168,6 +170,9 @@ int main (int argc, char *argv[])
   ConfLoader::Instance()->setSubnetMask(SUBNET_MASK);
   ConfLoader::Instance()->setAddressStart(ADDRESS_START);
   ConfLoader::Instance()->setPacketReceiveDelay(packetReceiveDelay);
+  ConfLoader::Instance()->setCongestionWaningLimit(CONGESTION_WARNING_LIMIT);
+  ConfLoader::Instance()->setCalculateCost(CALCULATE_COST);
+
   CommandLine cmd;
   bool enableFlowMonitor = true;
   cmd.AddValue ("EnableMonitor", "Enable Flow Monitor", enableFlowMonitor);

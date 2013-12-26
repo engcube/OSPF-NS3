@@ -152,7 +152,7 @@ public:
   };
 
   map<int,int>& getRecvPacket(){return m_RecvPacket;};
-  
+
   int getNodeByInterface(int id, int interface){
       if(id < m_CoreNum){
           return m_CoreNum+interface-1;
@@ -165,8 +165,14 @@ public:
       return -1;
   };
   
+
   uint32_t getPacketReceiveDelay(){return m_PacketReceiveDelay;};
   void setPacketReceiveDelay(uint32_t delay){m_PacketReceiveDelay = delay;};
+  void setCongestionWaningLimit(float limit){m_CongestionWarningLimit = limit;};
+  float getCongestionWaningLimit(){return m_CongestionWarningLimit;};
+  void setCalculateCost(float cost){m_CalculateCost = cost;};
+  float getCalculateCost(){return m_CalculateCost;};
+
 private:
 
 	ConfLoader(){
@@ -178,6 +184,9 @@ private:
 	//ConfLoader& operator=(ConfLoader const&){};
 	static ConfLoader* m_pInstance;
 
+  float m_CongestionWarningLimit; 
+  float m_CalculateCost;
+  
   enum NodeType{
       CORE = 0,
       TOR,
@@ -197,10 +206,10 @@ private:
   uint32_t m_PacketReceiveDelay;
 
   bool isDown;
-  map<int,int > m_lossPacketCounter;
   Time m_startTime;
   Time m_stopTime;
 
+  map<int,int > m_lossPacketCounter;
   map<int,int> m_SuccessPacket;
   map<int,int> m_SendPacket;
   map<int,int> m_RecvPacket;
