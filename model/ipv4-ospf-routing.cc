@@ -112,7 +112,9 @@ void Ipv4OSPFRouting::setRouter(Ptr<OSPFRouter> router){
 
 bool Ipv4OSPFRouting::update(){
   //cout << "<<<<in update  " << m_id << endl;
-  NS_LOG_DEBUG(Simulator::Now() << "update  " << m_id );
+  NS_LOG_DEBUG(Simulator::Now() << "update  " << m_id );  
+  
+  CheckTxQueue();
   return true;
 }
 
@@ -463,10 +465,19 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
   Ptr<Ipv4> to_ipv4 = ConfLoader::Instance()->getNodeContainer().Get(destNode)->GetObject<Ipv4OSPFRouting>()->getIpv4();
   cout << "Route from this node "<<m_id <<" on interface " << out_interface <<" to Node " << destNode << " on interface " << destInterface << endl;
 
+  Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
+  rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
+  rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
+  rtentry->SetGateway (Ipv4Address("0.0.0.0"));
+  rtentry->SetOutputDevice (m_ipv4->GetNetDevice (out_interface));
+  return rtentry;
+}
+
+void Ipv4OSPFRouting::CheckTxQueue(){
+    /*
   PointerValue ptr;
   m_ipv4->GetNetDevice (out_interface)->GetAttribute("TxQueue", ptr);
   int current = ptr.Get<Queue> ()->GetNPackets() ;
-
   UintegerValue limit;
   ptr.Get<Queue> ()->GetAttribute ("MaxPackets", limit);
   int total = limit.Get ();
@@ -478,17 +489,8 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
       cout << "Remove " << destNode << " from Neigbors; Update neighbors of " << m_id << endl;
       //CheckTxQueue();
       //updateNeighbors();
-  }
+  }*/
 
-  Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
-  rtentry->SetDestination (to_ipv4->GetAddress (destInterface, 0).GetLocal ());
-  rtentry->SetSource (m_ipv4->GetAddress (out_interface, 0).GetLocal ());
-  rtentry->SetGateway (Ipv4Address("0.0.0.0"));
-  rtentry->SetOutputDevice (m_ipv4->GetNetDevice (out_interface));
-  return rtentry;
-}
-
-void Ipv4OSPFRouting::CheckTxQueue(){
     m_CurNeighbors.clear();
     int n = m_ipv4->GetNInterfaces();
     for(int i=1; i< n; i++){
