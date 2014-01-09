@@ -113,7 +113,6 @@ void Ipv4OSPFRouting::setRouter(Ptr<OSPFRouter> router){
 bool Ipv4OSPFRouting::update(){
   //cout << "<<<<in update  " << m_id << endl;
   NS_LOG_DEBUG(Simulator::Now() << "update  " << m_id );  
-  
   CheckTxQueue();
   return true;
 }
@@ -474,23 +473,6 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
 }
 
 void Ipv4OSPFRouting::CheckTxQueue(){
-    /*
-  PointerValue ptr;
-  m_ipv4->GetNetDevice (out_interface)->GetAttribute("TxQueue", ptr);
-  int current = ptr.Get<Queue> ()->GetNPackets() ;
-  UintegerValue limit;
-  ptr.Get<Queue> ()->GetAttribute ("MaxPackets", limit);
-  int total = limit.Get ();
-
-  float percent = current*1.0/total;
-  cout << "Percent: " << percent <<" ;Total: " << total << " ;Current: " << current << endl;
-
-  if(percent>ConfLoader::Instance()->getCongestionWaningLimit()){
-      cout << "Remove " << destNode << " from Neigbors; Update neighbors of " << m_id << endl;
-      //CheckTxQueue();
-      //updateNeighbors();
-  }*/
-
     m_CurNeighbors.clear();
     int n = m_ipv4->GetNInterfaces();
     for(int i=1; i< n; i++){
@@ -509,6 +491,7 @@ void Ipv4OSPFRouting::CheckTxQueue(){
           m_CurNeighbors[ConfLoader::Instance()->getNodeByInterface(m_id,i)] = Simulator::Now();
       }
     }
+    updateNeighbors();
 }
 
 Ptr<Ipv4Route>
