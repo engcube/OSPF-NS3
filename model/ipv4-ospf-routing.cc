@@ -449,7 +449,7 @@ Ptr<Ipv4Route> Ipv4OSPFRouting::LookupOSPFRoutingTable (Ipv4Address source, Ipv4
               break;
           }
           //ECMP hash
-          int choice = (int)(source.Get()+dest.Get()) % size;
+          int choice = (int)(source.Get()+dest.Get()) /100 % size;
           out_interface = it->second[choice];
           break;
       }

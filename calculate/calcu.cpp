@@ -9,7 +9,7 @@
 using namespace std;
 
 int CORE_NUM = 4;
-int TOR_NUM = 4;
+int TOR_NUM = 512;
 int BORDER_NUM = 2;
 
 int total = CORE_NUM+TOR_NUM+BORDER_NUM+TOR_NUM;
@@ -195,7 +195,7 @@ int main(){
     //start = time(NULL);
 	start = clock();
     Dijkstra();
-    cout << toString() << endl;
+    //cout << toString() << endl;
 
     stop = clock();
     //stop = time(NULL);
