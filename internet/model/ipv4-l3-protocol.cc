@@ -548,7 +548,7 @@ NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to proces
   //uint32_t num = x->GetInteger(5,400);
   //cout << "Random " << num << endl;
   uint32_t num = ConfLoader::Instance()->getPacketReceiveDelay();//100;
-  Simulator::Schedule(MilliSeconds (num), &Ipv4L3Protocol::DelayReceive, this, packet, ipHeader, device, interface);
+  Simulator::Schedule(NanoSeconds (num), &Ipv4L3Protocol::DelayReceive, this, packet, ipHeader, device, interface);
 
   /*if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
                                       MakeCallback (&Ipv4L3Protocol::IpForward, this),
