@@ -23,7 +23,7 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("OspfExample");
 
-int downNode1 = 0;
+int downNode1 = 1;
 int downInterface1 = 2;
 
 void downAction(){
@@ -419,7 +419,7 @@ int main (int argc, char *argv[])
   int N =(int)(simulateTime/simulateInterval);
   for(int i=1; i<N;i++){
     Time onInterval = Seconds (i*simulateInterval);
-    //Simulator::Schedule (onInterval, &update);
+    Simulator::Schedule (onInterval, &update);
   }
 /*
   int N = stopTime/HelloInterval;

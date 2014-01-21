@@ -23,7 +23,7 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("OspfExample");
 
-int downNode1 = 0;
+int downNode1 = 1;
 int downInterface1 = 2;
 
 void downAction(){
@@ -157,8 +157,8 @@ int main (int argc, char *argv[])
   //int UnavailableInterval = 3;
   //int HelloInterval = 2;
   //float CheckNeighborInterval = 0.1;
-  int CORE_NUM = 4;
-  int TOR_NUM = 8;
+  int CORE_NUM = 2;
+  int TOR_NUM = 4;
   int BORDER_NUM = 2;
   int SUBNET_MASK = 24;
   uint32_t ADDRESS_START = 0x0a000000; // 10.0.0.1
@@ -180,7 +180,7 @@ int main (int argc, char *argv[])
   int destNode2 = nNodes+1;*/
   uint32_t packetSize = 512;
   float CONGESTION_WARNING_LIMIT = 0.98;
-  float CALCULATE_COST = 0.06; //s
+  float CALCULATE_COST = 1.56; //s
   float simulateTime = app_stop_time;
   float simulateInterval = 0.5;
   
