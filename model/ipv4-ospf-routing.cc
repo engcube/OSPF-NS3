@@ -309,6 +309,7 @@ void Ipv4OSPFRouting::toString(vector<uint16_t>& v){
     }
     cout << endl;
 }
+
 void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
           OSPFTag tag;
           uint8_t type;
@@ -330,12 +331,16 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                     vector<uint16_t> lsa = ConfLoader::Instance()->getLSA(index);
                     if(m_LSAs.find((int)lsa_node)==m_LSAs.end()){
                         //cout << "not found index" << endl;
-                        return sendLSAMessage(lsa_node, index);
+                      Simulator::Schedule (Seconds (ConfLoader::Instance()->getLSPDelay()), &Ipv4OSPFRouting::sendLSAMessage, this, lsa_node, index);
+                      return;
+                        //return sendLSAMessage(lsa_node, index);
                     }else{
                         vector<uint16_t> my = m_LSAs[(int)lsa_node];
                         if(my.size()!=lsa.size()){                        
                             //cout << "size not equal" << endl;
-                            return sendLSAMessage(lsa_node, index);
+                      Simulator::Schedule (Seconds (ConfLoader::Instance()->getLSPDelay()), &Ipv4OSPFRouting::sendLSAMessage, this, lsa_node, index);
+                      return;
+                        //return sendLSAMessage(lsa_node, index);
                         }
 
                         for(vector<uint16_t>::iterator it = my.begin(); it != my.end(); ++it){
@@ -343,7 +348,9 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                               //cout << "my not found in lsa" << endl;
                               //toString(my);
                               //toString(lsa);
-                              return sendLSAMessage(lsa_node, index);
+                      Simulator::Schedule (Seconds (ConfLoader::Instance()->getLSPDelay()), &Ipv4OSPFRouting::sendLSAMessage, this, lsa_node, index);
+                      return;
+                        //return sendLSAMessage(lsa_node, index);
                           }
                         }
 
@@ -352,7 +359,9 @@ void Ipv4OSPFRouting::handleMessage(Ptr<const Packet> packet){
                               //cout << "lsa not found in my" << endl;
                               //toString(my);
                               //toString(lsa);
-                              return sendLSAMessage(lsa_node, index);
+                      Simulator::Schedule (Seconds (ConfLoader::Instance()->getLSPDelay()), &Ipv4OSPFRouting::sendLSAMessage, this, lsa_node, index);
+                      return;
+                        //return sendLSAMessage(lsa_node, index);
                           }
                         }
                     }

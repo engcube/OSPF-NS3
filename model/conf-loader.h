@@ -173,6 +173,8 @@ public:
   void setCalculateCost(float cost){m_CalculateCost = cost;};
   float getCalculateCost(){return m_CalculateCost;};
 
+  void setLSPDelay(float cost){m_LSPDelay = cost;};
+  float getLSPDelay(){return m_LSPDelay;};
 private:
 
 	ConfLoader(){
@@ -187,6 +189,7 @@ private:
   float m_CongestionWarningLimit; 
   float m_CalculateCost;
   
+  float m_LSPDelay;
   enum NodeType{
       CORE = 0,
       TOR,

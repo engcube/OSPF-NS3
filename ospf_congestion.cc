@@ -188,7 +188,7 @@ int main (int argc, char *argv[])
   //float upTime  = 8;
 
   //float findDelay = 0.1; //s
-
+  float lspDelay = 0.01;
   //ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
@@ -198,6 +198,7 @@ int main (int argc, char *argv[])
   ConfLoader::Instance()->setPacketReceiveDelay(packetReceiveDelay);
   ConfLoader::Instance()->setCongestionWaningLimit(CONGESTION_WARNING_LIMIT);
   ConfLoader::Instance()->setCalculateCost(CALCULATE_COST);
+  ConfLoader::Instance()->setLSPDelay(lspDelay);
 
   CommandLine cmd;
   bool enableFlowMonitor = true;
