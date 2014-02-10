@@ -147,7 +147,7 @@ void createApplication(int source, int dest, int port, string rate, int size, fl
 
 int main (int argc, char *argv[])
 {
-  //LogComponentEnable ("OnOffApplication", LOG_LEVEL_INFO);
+	//LogComponentEnable ("OnOffApplication", LOG_LEVEL_INFO);
   //LogComponentEnable ("OSPFRoutingHelper", LOG_LEVEL_ALL);
   //LogComponentEnable ("Ipv4OSPFRouting", LOG_LEVEL_ALL);
   //LogComponentEnable ("Queue", LOG_LEVEL_ALL);
@@ -158,7 +158,8 @@ int main (int argc, char *argv[])
   //int HelloInterval = 2;
   //float CheckNeighborInterval = 0.1;
   int CORE_NUM = 2;
-  int TOR_NUM = 4;
+  int TOR_NUM = 250;
+  float CALCULATE_COST = 0.22; //s
   int BORDER_NUM = 2;
   int SUBNET_MASK = 24;
   uint32_t ADDRESS_START = 0x0a000000; // 10.0.0.1
@@ -180,7 +181,6 @@ int main (int argc, char *argv[])
   int destNode2 = nNodes+1;*/
   uint32_t packetSize = 512;
   float CONGESTION_WARNING_LIMIT = 0.98;
-  float CALCULATE_COST = 1.56; //s
   float simulateTime = app_stop_time;
   float simulateInterval = 0.5;
   
@@ -189,6 +189,21 @@ int main (int argc, char *argv[])
 
   float lspDelay = 0.01;
   float findDelay = 0.02; //s
+
+/*	if(argc == 4){
+		CORE_NUM = atoi(argv[1]);
+		TOR_NUM = atoi(argv[2]);
+		CALCULATE_COST = atof(argv[3]);
+	}
+	cout << CORE_NUM << " " << TOR_NUM << " " << CALCULATE_COST << endl;
+	*/
+	CommandLine cmd;
+  bool enableFlowMonitor = true;
+	//cmd.AddValue("nCores", "Core Nums", CORE_NUM);
+	//cmd.AddValue("nToRs", "ToR Nums", TOR_NUM);
+	//cmd.AddValue("cost", "Calculate Cost", CALCULATE_COST);
+  cmd.AddValue ("EnableMonitor", "Enable Flow Monitor", enableFlowMonitor);
+	cmd.Parse(argc, argv);
   //ConfLoader::Instance()->setUnavailableInterval(UnavailableInterval);
   ConfLoader::Instance()->setCoreNum(CORE_NUM);
   ConfLoader::Instance()->setToRNum(TOR_NUM);
@@ -199,13 +214,6 @@ int main (int argc, char *argv[])
   ConfLoader::Instance()->setCongestionWaningLimit(CONGESTION_WARNING_LIMIT);
   ConfLoader::Instance()->setCalculateCost(CALCULATE_COST);
   ConfLoader::Instance()->setLSPDelay(lspDelay);
-
-  CommandLine cmd;
-  bool enableFlowMonitor = true;
-  cmd.AddValue ("EnableMonitor", "Enable Flow Monitor", enableFlowMonitor);
-  //cmd.AddValue ("nNodes", "Number of Router nodes", nNodes);
-  cmd.Parse (argc, argv);
-
   //
   //  Step 1
   //  Node Basic Configuration
